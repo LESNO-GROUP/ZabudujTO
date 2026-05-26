@@ -3,777 +3,723 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Szafy wnękowe na wymiar — zaprojektuj i złóż sam | LESNO Meble</title>
-<meta name="description" content="Zaprojektuj szafę wnękową, garderobę lub regał na wymiar w 5 minut. Pocięte formatki Kronospan + instrukcja montażu — składasz sam. Realizacja 5–10 dni. Dostawa cała Polska."/>
-<meta name="keywords" content="szafy na wymiar, szafa wnękowa na wymiar, meble na wymiar DIY, formatki meblowe, garderoba na wymiar, meble na wymiar Katowice, meble na wymiar Śląsk"/>
-<link rel="canonical" href="https://www.lesno-meble.pl/"/>
-<meta property="og:type" content="website"/>
-<meta property="og:url" content="https://www.lesno-meble.pl/"/>
-<meta property="og:title" content="Szafy wnękowe na wymiar — zaprojektuj i złóż sam"/>
-<meta property="og:description" content="Konfigurator szaf na wymiar. My tniemy i oklejamy — Ty składasz sam. Realizacja 5–10 dni."/>
+<title>ZabudujTO — Meble wnękowe na wymiar do samodzielnego montażu</title>
+<meta name="description" content="Zaprojektuj szafę wnękową, garderobę, regał lub zabudowę łazienkową online. My przycinamy formatki Kronospan — Ty składasz w domu. Dostawa w całej Polsce."/>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
 <style>
-:root {
-  --ink:      #18181A;
-  --ink-60:   #18181A99;
-  --ink-30:   #18181A4D;
-  --cream:    #F7F3EC;
-  --cream-d:  #EDE8DE;
-  --warm:     #C8A96A;
-  --warm-d:   #9A7A3E;
-  --white:    #FFFFFF;
-  --ff-d:     'Cormorant Garamond', Georgia, serif;
-  --ff-b:     'DM Sans', system-ui, sans-serif;
-}
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-html { scroll-behavior: smooth; font-size: 16px; }
-body { font-family: var(--ff-b); background: var(--white); color: var(--ink); -webkit-font-smoothing: antialiased; overflow-x: hidden; }
+  :root{
+    --ink:#1a1a17;
+    --ink-2:#2d2d28;
+    --ink-mute:#6a6a62;
+    --line:#d9d3c4;
+    --line-2:#ebe6d8;
+    --paper:#f5f1e8;
+    --paper-2:#ede7d6;
+    --card:#ffffff;
+    --accent:#b8915a;      /* warm sandy beige (matches logo) */
+    --accent-d:#8a6a3d;
+    --clay:#a8552f;        /* CTA accent, muted clay */
+    --ok:#3f7a52;
+    --bad:#b43b3b;
+    --ff-serif:'Instrument Serif', 'Times New Roman', serif;
+    --ff-sans:'Inter', system-ui, sans-serif;
+    --ff-mono:'JetBrains Mono', ui-monospace, monospace;
+  }
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{font-family:var(--ff-sans);background:var(--paper);color:var(--ink);-webkit-font-smoothing:antialiased;line-height:1.5;font-size:16px;overflow-x:hidden}
+  img{display:block;max-width:100%}
+  a{color:inherit;text-decoration:none}
+  button{font-family:inherit;cursor:pointer;border:none;background:none}
+  .mono{font-family:var(--ff-mono);font-feature-settings:'tnum' 1}
+  .serif{font-family:var(--ff-serif);font-weight:400}
 
-/* ── NAV ── */
-nav {
-  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
-  background: rgba(255,255,255,0.92);
-  backdrop-filter: blur(12px);
-  border-bottom: 1px solid rgba(24,24,26,0.08);
-  padding: 0 2rem;
-  height: 64px;
-  display: flex; align-items: center; justify-content: space-between;
-}
-.nav-logo {
-  font-family: var(--ff-d);
-  font-size: 1.35rem; font-weight: 400;
-  color: var(--ink); text-decoration: none;
-  letter-spacing: -0.01em;
-}
-.nav-logo span { color: var(--warm-d); }
-.nav-cta {
-  display: inline-flex; align-items: center; gap: .5rem;
-  background: var(--ink); color: var(--white);
-  padding: .55rem 1.25rem;
-  border-radius: 100px; font-size: .85rem; font-weight: 500;
-  text-decoration: none; transition: background .2s, transform .15s;
-}
-.nav-cta:hover { background: var(--warm-d); transform: translateY(-1px); }
+  /* ── NAV ── */
+  nav{
+    position:fixed;top:0;left:0;right:0;z-index:50;
+    height:88px;background:rgba(245,241,232,.92);backdrop-filter:blur(14px) saturate(140%);
+    border-bottom:1px solid var(--line);
+    display:flex;align-items:center;
+  }
+  .nav-inner{width:100%;max-width:1440px;margin:0 auto;padding:0 2.5rem;display:flex;align-items:center;justify-content:space-between;gap:2rem}
+  .brand{display:flex;align-items:center;height:56px}
+  .brand img{height:56px;width:auto;display:block}
+  .nav-links{display:flex;gap:2rem;font-size:.875rem;color:var(--ink-mute)}
+  .nav-links a{transition:color .15s}
+  .nav-links a:hover{color:var(--ink)}
+  .nav-cta{display:inline-flex;align-items:center;gap:.5rem;background:var(--ink);color:var(--paper);padding:.6rem 1.1rem;border-radius:2px;font-size:.82rem;font-weight:500;letter-spacing:.02em;transition:background .15s}
+  .nav-cta:hover{background:var(--accent-d)}
+  .nav-cta svg{width:12px;height:12px}
+  @media(max-width:760px){.nav-links{display:none}.nav-inner{padding:0 1.25rem}}
 
-/* ── HERO ── */
-.hero {
-  min-height: 100vh;
-  background: var(--cream);
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  align-items: center;
-  padding: 80px 0 0;
-  overflow: hidden;
-  position: relative;
-}
-.hero::before {
-  content: '';
-  position: absolute; inset: 0;
-  background: radial-gradient(ellipse 60% 60% at 70% 50%, rgba(200,169,106,.12) 0%, transparent 70%);
-  pointer-events: none;
-}
-.hero-text {
-  padding: 5rem 4rem 5rem 10%;
-  position: relative; z-index: 1;
-}
-.hero-badge {
-  display: inline-flex; align-items: center; gap: .5rem;
-  background: rgba(200,169,106,.15); color: var(--warm-d);
-  border: 1px solid rgba(200,169,106,.3);
-  padding: .3rem .9rem; border-radius: 100px;
-  font-size: .8rem; font-weight: 500; letter-spacing: .04em; text-transform: uppercase;
-  margin-bottom: 1.5rem;
-}
-.hero-badge::before { content: '✦'; font-size: .7rem; }
-h1 {
-  font-family: var(--ff-d);
-  font-size: clamp(2.8rem, 5vw, 4.5rem);
-  font-weight: 300; line-height: 1.08;
-  letter-spacing: -.02em;
-  margin-bottom: 1.5rem;
-  color: var(--ink);
-}
-h1 em { font-style: italic; color: var(--warm-d); }
-.hero-sub {
-  font-size: 1.05rem; line-height: 1.65;
-  color: var(--ink-60); max-width: 440px;
-  margin-bottom: 2.5rem;
-}
-.hero-btns { display: flex; gap: 1rem; flex-wrap: wrap; }
-.btn-primary {
-  display: inline-flex; align-items: center; gap: .6rem;
-  background: var(--ink); color: var(--white);
-  padding: .85rem 2rem; border-radius: 100px;
-  font-size: .95rem; font-weight: 500;
-  text-decoration: none; transition: all .2s;
-  box-shadow: 0 4px 20px rgba(24,24,26,.2);
-}
-.btn-primary:hover { background: var(--warm-d); transform: translateY(-2px); box-shadow: 0 8px 28px rgba(154,122,62,.35); }
-.btn-primary svg { transition: transform .2s; }
-.btn-primary:hover svg { transform: translateX(3px); }
-.btn-secondary {
-  display: inline-flex; align-items: center; gap: .5rem;
-  color: var(--ink); font-size: .95rem; font-weight: 400;
-  text-decoration: none; padding: .85rem 1.5rem;
-  border: 1px solid rgba(24,24,26,.15); border-radius: 100px;
-  transition: all .2s;
-}
-.btn-secondary:hover { border-color: var(--ink); background: var(--cream-d); }
-.hero-stats {
-  display: flex; gap: 2.5rem; margin-top: 3.5rem;
-  padding-top: 2rem; border-top: 1px solid rgba(24,24,26,.1);
-}
-.stat-n { font-family: var(--ff-d); font-size: 2rem; font-weight: 400; color: var(--ink); line-height: 1; }
-.stat-l { font-size: .78rem; color: var(--ink-60); margin-top: .25rem; }
+  /* ── HERO ── */
+  .hero{
+    padding:calc(88px + 2rem) 0 0;
+    max-width:1440px;margin:0 auto;
+    position:relative;
+  }
+  .hero-grid{
+    display:grid;grid-template-columns:minmax(0,1fr) 1.1fr;
+    gap:3rem;
+    padding:3rem 2.5rem 0;
+    align-items:end;
+  }
+  .hero-meta{
+    font-family:var(--ff-mono);font-size:.72rem;text-transform:uppercase;letter-spacing:.12em;
+    color:var(--ink-mute);display:flex;gap:1.5rem;margin-bottom:2.5rem;
+    padding-bottom:1rem;border-bottom:1px solid var(--line);
+  }
+  .hero-meta span:first-child{color:var(--ink)}
+  .hero h1{
+    font-family:var(--ff-serif);
+    font-size:clamp(3.2rem, 7.5vw, 7.5rem);
+    line-height:.95;letter-spacing:-.02em;font-weight:400;
+    color:var(--ink);
+  }
+  .hero h1 em{font-style:italic;color:var(--accent)}
+  .hero-right{position:relative;min-height:520px}
+  .hero-photo{
+    width:100%;height:620px;overflow:hidden;background:var(--paper-2);
+    position:relative;
+  }
+  .hero-photo img{width:100%;height:100%;object-fit:cover}
+  .hero-photo-caption{
+    position:absolute;left:1.25rem;bottom:1.25rem;
+    background:rgba(26,26,23,.78);color:var(--paper);
+    padding:.55rem .9rem;font-family:var(--ff-mono);font-size:.7rem;letter-spacing:.08em;
+    text-transform:uppercase;backdrop-filter:blur(4px);
+  }
+  .hero-photo-dims{
+    position:absolute;right:1.25rem;top:1.25rem;
+    font-family:var(--ff-mono);font-size:.7rem;color:var(--paper);
+    background:rgba(26,26,23,.6);padding:.4rem .7rem;letter-spacing:.04em;
+  }
 
-.hero-visual {
-  height: 100vh;
-  position: relative;
-  overflow: hidden;
-}
-.hero-schematic {
-  position: absolute; inset: 0;
-  display: flex; align-items: center; justify-content: center;
-  padding: 5rem 3rem 3rem;
-}
-.wardrobe-svg-wrap {
-  width: 100%; max-width: 440px;
-  filter: drop-shadow(0 20px 60px rgba(24,24,26,.12));
-  animation: float 6s ease-in-out infinite;
-}
-@keyframes float {
-  0%,100% { transform: translateY(0); }
-  50% { transform: translateY(-12px); }
-}
+  .hero-lede{
+    display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:3rem;
+    padding:3rem 2.5rem;
+    border-top:1px solid var(--line);margin-top:3rem;
+  }
+  .hero-lede p{font-size:1.2rem;line-height:1.45;color:var(--ink-2);max-width:44ch}
+  .hero-lede p em{font-family:var(--ff-serif);font-style:italic;font-size:1.3em;color:var(--accent)}
+  .hero-cta{display:flex;align-items:flex-end;gap:1rem;flex-wrap:wrap}
+  .btn-primary{
+    display:inline-flex;align-items:center;gap:.7rem;
+    background:var(--ink);color:var(--paper);
+    padding:1.1rem 1.8rem;border-radius:2px;
+    font-size:.95rem;font-weight:500;letter-spacing:.02em;
+    transition:background .15s,transform .1s;
+  }
+  .btn-primary:hover{background:var(--accent-d);transform:translateY(-1px)}
+  .btn-primary svg{width:16px;height:16px;transition:transform .2s}
+  .btn-primary:hover svg{transform:translateX(3px)}
+  .btn-ghost{
+    display:inline-flex;align-items:center;gap:.5rem;
+    padding:1.1rem 1.4rem;border-radius:2px;
+    font-size:.95rem;color:var(--ink);border:1px solid var(--ink);
+    transition:background .15s,color .15s;
+  }
+  .btn-ghost:hover{background:var(--ink);color:var(--paper)}
+  @media(max-width:900px){
+    .hero-grid{grid-template-columns:1fr;padding:2rem 1.25rem 0}
+    .hero-right{min-height:0}
+    .hero-photo{height:360px}
+    .hero-lede{grid-template-columns:1fr;padding:2rem 1.25rem;gap:1.5rem}
+  }
 
-/* ── SOCIAL PROOF BAR ── */
-.proof-bar {
-  background: var(--ink); color: var(--white);
-  padding: 1.5rem 2rem;
-  display: flex; align-items: center; justify-content: center; gap: 3rem;
-  flex-wrap: wrap;
-}
-.proof-item {
-  display: flex; align-items: center; gap: .75rem;
-  font-size: .88rem; color: rgba(255,255,255,.75);
-}
-.proof-item strong { color: var(--white); font-weight: 500; }
-.proof-dot { width: 4px; height: 4px; border-radius: 50%; background: var(--warm); flex-shrink: 0; }
+  /* ── TICKER ── */
+  .ticker{
+    background:var(--ink);color:var(--paper);
+    padding:1.1rem 0;overflow:hidden;
+    border-top:1px solid var(--ink);border-bottom:1px solid var(--ink);
+  }
+  .ticker-track{
+    display:flex;gap:3rem;white-space:nowrap;
+    animation:tick 40s linear infinite;
+    font-family:var(--ff-mono);font-size:.78rem;letter-spacing:.1em;text-transform:uppercase;
+  }
+  .ticker-track span{display:inline-flex;align-items:center;gap:1rem;color:rgba(245,241,232,.7)}
+  .ticker-track span::after{content:'✦';color:var(--accent);font-family:var(--ff-serif);font-size:1rem}
+  @keyframes tick{from{transform:translateX(0)}to{transform:translateX(-50%)}}
 
-/* ── SEKCJE OGÓLNE ── */
-section { padding: 7rem 10%; }
-.section-label {
-  font-size: .75rem; font-weight: 500; letter-spacing: .1em; text-transform: uppercase;
-  color: var(--warm-d); margin-bottom: 1rem;
-  display: flex; align-items: center; gap: .6rem;
-}
-.section-label::before { content: ''; display: block; width: 24px; height: 1px; background: var(--warm-d); }
-h2 {
-  font-family: var(--ff-d);
-  font-size: clamp(2rem, 3.5vw, 3rem);
-  font-weight: 300; letter-spacing: -.02em; line-height: 1.1;
-  margin-bottom: 1rem;
-}
-h2 em { font-style: italic; color: var(--warm-d); }
-.section-sub {
-  font-size: 1rem; color: var(--ink-60); max-width: 520px; line-height: 1.7;
-}
+  /* ── PROCESS ── */
+  section{max-width:1440px;margin:0 auto;padding:7rem 2.5rem}
+  @media(max-width:760px){section{padding:4rem 1.25rem}}
+  .sec-head{display:grid;grid-template-columns:minmax(0,1fr) 2fr;gap:3rem;margin-bottom:4rem;align-items:end}
+  .sec-label{font-family:var(--ff-mono);font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-mute);display:flex;align-items:center;gap:.6rem}
+  .sec-label::before{content:'';display:inline-block;width:20px;height:1px;background:var(--ink-mute)}
+  h2{
+    font-family:var(--ff-serif);font-weight:400;
+    font-size:clamp(2.4rem, 4.5vw, 4.2rem);
+    line-height:1;letter-spacing:-.02em;color:var(--ink);
+  }
+  h2 em{font-style:italic;color:var(--accent)}
+  @media(max-width:760px){.sec-head{grid-template-columns:1fr;gap:1rem}}
 
-/* ── JAK TO DZIAŁA ── */
-.how {
-  background: var(--white);
-}
-.how-grid {
-  display: grid; grid-template-columns: repeat(3, 1fr); gap: 2rem;
-  margin-top: 4rem;
-}
-.how-card {
-  padding: 2.5rem 2rem;
-  border: 1px solid rgba(24,24,26,.08);
-  border-radius: 16px;
-  position: relative; overflow: hidden;
-  transition: border-color .2s, box-shadow .2s;
-}
-.how-card:hover {
-  border-color: rgba(200,169,106,.4);
-  box-shadow: 0 8px 40px rgba(200,169,106,.12);
-}
-.how-card::before {
-  content: '';
-  position: absolute; inset: 0;
-  background: linear-gradient(135deg, rgba(200,169,106,.06) 0%, transparent 60%);
-  pointer-events: none;
-}
-.how-num {
-  font-family: var(--ff-d); font-size: 5rem; font-weight: 300;
-  color: rgba(200,169,106,.2); line-height: 1;
-  position: absolute; top: 1rem; right: 1.5rem;
-}
-.how-icon {
-  width: 48px; height: 48px; background: var(--cream);
-  border-radius: 12px; display: flex; align-items: center; justify-content: center;
-  margin-bottom: 1.5rem;
-}
-.how-icon svg { width: 24px; height: 24px; stroke: var(--warm-d); fill: none; stroke-width: 1.5; }
-.how-card h3 {
-  font-family: var(--ff-d); font-size: 1.4rem; font-weight: 400;
-  margin-bottom: .75rem; line-height: 1.2;
-}
-.how-card p { font-size: .9rem; color: var(--ink-60); line-height: 1.65; }
-.how-time {
-  margin-top: 1.25rem;
-  display: inline-flex; align-items: center; gap: .4rem;
-  font-size: .78rem; color: var(--warm-d); font-weight: 500;
-}
-.how-time::before { content: '⏱'; }
+  .process{display:grid;grid-template-columns:repeat(4, 1fr);gap:0;border-top:1px solid var(--ink)}
+  .process-step{
+    padding:2rem 1.75rem 2.5rem;border-right:1px solid var(--line);
+    position:relative;display:flex;flex-direction:column;gap:1rem;min-height:280px;
+  }
+  .process-step:last-child{border-right:none}
+  .process-num{
+    font-family:var(--ff-mono);font-size:.72rem;letter-spacing:.12em;color:var(--accent);
+    display:flex;align-items:center;gap:.5rem;
+  }
+  .process-step h3{font-family:var(--ff-serif);font-size:1.85rem;font-weight:400;line-height:1.05;letter-spacing:-.01em}
+  .process-step p{font-size:.92rem;color:var(--ink-mute);line-height:1.55}
+  .process-time{
+    margin-top:auto;font-family:var(--ff-mono);font-size:.7rem;letter-spacing:.06em;
+    color:var(--ink-mute);padding-top:1rem;border-top:1px dashed var(--line);
+  }
+  .process-illu{
+    height:70px;display:flex;align-items:flex-end;
+    opacity:.6;
+  }
+  .process-illu svg{height:60px}
+  @media(max-width:900px){.process{grid-template-columns:1fr 1fr}.process-step:nth-child(2){border-right:none}.process-step:nth-child(-n+2){border-bottom:1px solid var(--line)}}
+  @media(max-width:560px){.process{grid-template-columns:1fr}.process-step{border-right:none!important;border-bottom:1px solid var(--line)!important}.process-step:last-child{border-bottom:none!important}}
 
-/* ── DLACZEGO DIY ── */
-.why {
-  background: var(--cream);
-}
-.why-layout {
-  display: grid; grid-template-columns: 1fr 1fr; gap: 5rem; align-items: center;
-  margin-top: 4rem;
-}
-.why-list { display: flex; flex-direction: column; gap: 1.5rem; }
-.why-item {
-  display: flex; gap: 1.25rem; align-items: flex-start;
-  padding: 1.5rem; background: var(--white); border-radius: 12px;
-  transition: box-shadow .2s;
-}
-.why-item:hover { box-shadow: 0 4px 24px rgba(24,24,26,.08); }
-.why-ico {
-  width: 40px; height: 40px; border-radius: 10px;
-  background: var(--cream); display: flex; align-items: center; justify-content: center;
-  flex-shrink: 0; font-size: 1.1rem;
-}
-.why-item h4 { font-size: .95rem; font-weight: 500; margin-bottom: .3rem; }
-.why-item p { font-size: .88rem; color: var(--ink-60); line-height: 1.6; }
-.why-compare {
-  background: var(--white); border-radius: 20px; overflow: hidden;
-  box-shadow: 0 8px 40px rgba(24,24,26,.1);
-}
-.compare-header {
-  display: grid; grid-template-columns: 1fr 1fr;
-}
-.compare-col {
-  padding: 1.25rem 1.5rem;
-  display: flex; align-items: center; gap: .6rem;
-  font-size: .85rem; font-weight: 500;
-}
-.compare-col.lesno { background: var(--ink); color: var(--white); }
-.compare-col.salon { background: var(--cream-d); color: var(--ink-60); text-decoration: line-through; }
-.compare-row {
-  display: grid; grid-template-columns: 1fr 1fr;
-  border-bottom: 1px solid rgba(24,24,26,.06);
-}
-.compare-row:last-child { border-bottom: none; }
-.compare-cell {
-  padding: 1rem 1.5rem; font-size: .88rem;
-  display: flex; align-items: center; gap: .5rem;
-}
-.compare-cell.good { color: var(--ink); font-weight: 500; }
-.compare-cell.good::before { content: '✓'; color: #22a060; font-weight: 700; }
-.compare-cell.bad { color: var(--ink-60); }
-.compare-cell.bad::before { content: '✗'; color: #d04040; }
-.compare-cell:first-child { border-right: 1px solid rgba(24,24,26,.06); background: rgba(200,169,106,.04); }
+  /* ── CATEGORIES ── */
+  .cats{background:var(--paper)}
+  .cat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem}
+  .cat-card{
+    display:block;background:var(--card);overflow:hidden;
+    position:relative;aspect-ratio:3/4;cursor:pointer;
+    transition:transform .3s ease;
+  }
+  .cat-card:hover{transform:translateY(-4px)}
+  .cat-card img{width:100%;height:100%;object-fit:cover;transition:transform .6s ease;filter:grayscale(.1)}
+  .cat-card:hover img{transform:scale(1.04);filter:none}
+  .cat-card::after{
+    content:'';position:absolute;inset:0;
+    background:linear-gradient(180deg,transparent 50%,rgba(26,26,23,.75) 100%);
+    pointer-events:none;
+  }
+  .cat-info{position:absolute;left:1.25rem;right:1.25rem;bottom:1.1rem;color:var(--paper);z-index:1}
+  .cat-num{font-family:var(--ff-mono);font-size:.7rem;letter-spacing:.12em;opacity:.7}
+  .cat-name{font-family:var(--ff-serif);font-size:1.7rem;font-weight:400;line-height:1;margin-top:.3rem}
+  .cat-range{font-family:var(--ff-mono);font-size:.72rem;opacity:.7;margin-top:.4rem;letter-spacing:.04em}
+  @media(max-width:900px){.cat-grid{grid-template-columns:1fr 1fr}}
 
-/* ── REALIZACJE ── */
-.projects {
-  background: var(--white);
-}
-.projects-grid {
-  display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem;
-  margin-top: 4rem;
-}
-@media (max-width: 700px) { .projects-grid { grid-template-columns: 1fr 1fr; } }
-.project-card {
-  border-radius: 16px; overflow: hidden;
-  border: 1px solid rgba(24,24,26,.08);
-  transition: transform .2s, box-shadow .2s;
-  background: var(--cream);
-}
-.project-card:hover { transform: translateY(-4px); box-shadow: 0 12px 40px rgba(24,24,26,.12); }
-.project-img {
-  aspect-ratio: 4/3; background: var(--cream-d);
-  display: flex; align-items: center; justify-content: center;
-  position: relative; overflow: hidden;
-}
-.project-img img { width:100%; height:100%; object-fit:cover; display:block; transition:transform .3s; }
-.project-card:hover .project-img img { transform:scale(1.04); }
-.project-placeholder {
-  width: 100%; height: 100%;
-  display: flex; flex-direction: column;
-  align-items: center; justify-content: center;
-  gap: 1rem; color: var(--ink-30);
-}
-.project-placeholder svg { width: 48px; height: 48px; stroke: var(--ink-30); fill: none; stroke-width: 1; }
-.project-placeholder span { font-size: .8rem; letter-spacing: .05em; text-transform: uppercase; }
-.project-info { padding: 1.25rem 1.5rem; }
-.project-type { font-size: .75rem; color: var(--warm-d); font-weight: 500; text-transform: uppercase; letter-spacing: .06em; }
-.project-title { font-family: var(--ff-d); font-size: 1.2rem; font-weight: 400; margin: .25rem 0 .5rem; }
-.project-meta { font-size: .82rem; color: var(--ink-60); }
-.projects-note {
-  text-align: center; margin-top: 2.5rem;
-  font-size: .88rem; color: var(--ink-60);
-  padding: 1.25rem; background: var(--cream); border-radius: 12px;
-}
+  /* ── SYSTEM (why diy) ── */
+  .system{background:var(--ink);color:var(--paper);max-width:none;position:relative}
+  .system::before{
+    content:'';position:absolute;inset:0;
+    background-image:
+      linear-gradient(rgba(245,241,232,.03) 1px,transparent 1px),
+      linear-gradient(90deg,rgba(245,241,232,.03) 1px,transparent 1px);
+    background-size:48px 48px;
+    pointer-events:none;
+  }
+  .system-inner{max-width:1440px;margin:0 auto;padding:7rem 2.5rem;position:relative}
+  .system h2{color:var(--paper)}
+  .system h2 em{color:var(--accent)}
+  .system .sec-label{color:rgba(245,241,232,.55)}
+  .system .sec-label::before{background:rgba(245,241,232,.3)}
+  .system-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:0;border-top:1px solid rgba(245,241,232,.15);margin-top:4rem}
+  .system-item{padding:2rem 2rem 2.5rem;border-bottom:1px solid rgba(245,241,232,.15);border-right:1px solid rgba(245,241,232,.15);min-height:240px;display:flex;flex-direction:column}
+  .system-item:nth-child(2n){border-right:none}
+  .system-item:nth-last-child(-n+2){border-bottom:none}
+  .si-head{display:flex;align-items:baseline;gap:1rem;margin-bottom:1rem}
+  .si-num{font-family:var(--ff-mono);font-size:.7rem;color:var(--accent);letter-spacing:.1em}
+  .si-title{font-family:var(--ff-serif);font-size:1.9rem;line-height:1;letter-spacing:-.01em;font-weight:400}
+  .system-item p{font-size:.95rem;line-height:1.6;color:rgba(245,241,232,.7);max-width:46ch}
+  .system-item strong{color:var(--paper);font-weight:500}
+  @media(max-width:760px){.system-grid{grid-template-columns:1fr}.system-item{border-right:none!important}.system-item:last-child{border-bottom:none!important}.system-inner{padding:4rem 1.25rem}}
 
-/* ── FAQ ── */
-.faq { background: var(--cream); }
-.faq-grid {
-  display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;
-  margin-top: 4rem;
-}
-.faq-item {
-  background: var(--white); border-radius: 12px;
-  padding: 1.75rem;
-  transition: box-shadow .2s;
-}
-.faq-item:hover { box-shadow: 0 4px 24px rgba(24,24,26,.08); }
-.faq-item h4 {
-  font-family: var(--ff-d); font-size: 1.15rem; font-weight: 400;
-  margin-bottom: .75rem; line-height: 1.3;
-}
-.faq-item p { font-size: .88rem; color: var(--ink-60); line-height: 1.7; }
+  /* ── WORK (portfolio) ── */
+  .work{background:var(--paper)}
+  .work-grid{
+    display:grid;grid-template-columns:repeat(12,1fr);grid-auto-rows:120px;gap:1rem;
+  }
+  .wcard{position:relative;overflow:hidden;background:var(--paper-2);cursor:pointer}
+  .wcard img{width:100%;height:100%;object-fit:cover;transition:transform .6s ease}
+  .wcard:hover img{transform:scale(1.03)}
+  .wcard::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,transparent 55%,rgba(26,26,23,.7));pointer-events:none;opacity:0;transition:opacity .2s}
+  .wcard:hover::after{opacity:1}
+  .wc-info{position:absolute;left:1rem;right:1rem;bottom:.85rem;color:var(--paper);z-index:1;opacity:0;transform:translateY(8px);transition:all .3s}
+  .wcard:hover .wc-info{opacity:1;transform:none}
+  .wc-type{font-family:var(--ff-mono);font-size:.68rem;letter-spacing:.1em;text-transform:uppercase;opacity:.8}
+  .wc-title{font-family:var(--ff-serif);font-size:1.3rem;line-height:1.1;margin-top:.2rem}
+  .w-1{grid-column:span 6;grid-row:span 4}
+  .w-2{grid-column:span 3;grid-row:span 4}
+  .w-3{grid-column:span 3;grid-row:span 4}
+  .w-4{grid-column:span 4;grid-row:span 3}
+  .w-5{grid-column:span 4;grid-row:span 3}
+  .w-6{grid-column:span 4;grid-row:span 3}
+  @media(max-width:900px){
+    .work-grid{grid-template-columns:repeat(6,1fr);grid-auto-rows:100px}
+    .w-1{grid-column:span 6;grid-row:span 3}
+    .w-2,.w-3{grid-column:span 3;grid-row:span 3}
+    .w-4,.w-5,.w-6{grid-column:span 2;grid-row:span 3}
+  }
 
-/* ── CTA KOŃCOWE ── */
-.cta-section {
-  background: var(--ink); color: var(--white);
-  text-align: center;
-  padding: 8rem 10%;
-  position: relative; overflow: hidden;
-}
-.cta-section::before {
-  content: '';
-  position: absolute; inset: 0;
-  background: radial-gradient(ellipse 70% 70% at 50% 50%, rgba(200,169,106,.15) 0%, transparent 70%);
-}
-.cta-section h2 { color: var(--white); position: relative; }
-.cta-section h2 em { color: var(--warm); }
-.cta-section .section-sub { color: rgba(255,255,255,.6); max-width: 480px; margin: 1rem auto 2.5rem; }
-.cta-section .btn-primary { background: var(--warm-d); color: var(--white); font-size: 1.05rem; padding: 1rem 2.5rem; position: relative; }
-.cta-section .btn-primary:hover { background: var(--warm); }
-.cta-guarantee {
-  margin-top: 2rem; font-size: .82rem; color: rgba(255,255,255,.45);
-  display: flex; align-items: center; justify-content: center; gap: 2rem;
-}
-.cta-guarantee span { display: flex; align-items: center; gap: .4rem; }
+  /* ── SUPPLIERS / materials ── */
+  .suppliers{border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+  .supp-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:0;border-top:1px solid var(--line);margin-top:3rem}
+  .supp{padding:2rem 2rem;border-right:1px solid var(--line);display:flex;flex-direction:column;gap:.5rem}
+  .supp:last-child{border-right:none}
+  .supp-name{font-family:var(--ff-serif);font-size:2.2rem;letter-spacing:-.01em}
+  .supp-role{font-family:var(--ff-mono);font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;color:var(--accent)}
+  .supp-desc{font-size:.9rem;color:var(--ink-mute);line-height:1.5;margin-top:.3rem}
+  @media(max-width:760px){.supp-grid{grid-template-columns:1fr}.supp{border-right:none;border-bottom:1px solid var(--line)}.supp:last-child{border-bottom:none}}
 
-/* ── FOOTER ── */
-footer {
-  background: var(--ink); color: rgba(255,255,255,.45);
-  padding: 2.5rem 10%;
-  display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;
-  border-top: 1px solid rgba(255,255,255,.08);
-  font-size: .82rem;
-}
-footer a { color: rgba(255,255,255,.45); text-decoration: none; }
-footer a:hover { color: var(--warm); }
+  /* ── FAQ ── */
+  .faq-list{border-top:1px solid var(--ink);margin-top:3rem}
+  .faq-item{border-bottom:1px solid var(--line);padding:1.75rem 0;cursor:pointer}
+  .faq-q{display:flex;justify-content:space-between;align-items:baseline;gap:2rem;font-family:var(--ff-serif);font-size:1.5rem;font-weight:400;line-height:1.2;letter-spacing:-.01em}
+  .faq-q-idx{font-family:var(--ff-mono);font-size:.72rem;color:var(--accent);letter-spacing:.1em;flex-shrink:0}
+  .faq-q-plus{font-family:var(--ff-mono);font-size:1.3rem;color:var(--ink-mute);flex-shrink:0;transition:transform .2s}
+  .faq-item.open .faq-q-plus{transform:rotate(45deg)}
+  .faq-a{font-size:.98rem;line-height:1.65;color:var(--ink-mute);margin-top:1rem;max-width:70ch;display:none}
+  .faq-item.open .faq-a{display:block}
+  .faq-a strong{color:var(--ink);font-weight:500}
 
-/* ── RESPONSIVE ── */
-@media (max-width: 900px) {
-  .hero { grid-template-columns: 1fr; }
-  .hero-visual { display: none; }
-  .hero-text { padding: 5rem 6% 4rem; }
-  .how-grid { grid-template-columns: 1fr; }
-  .why-layout { grid-template-columns: 1fr; }
-  .projects-grid { grid-template-columns: 1fr 1fr; }
-  .faq-grid { grid-template-columns: 1fr; }
-  section { padding: 5rem 6%; }
-  .proof-bar { gap: 1.5rem; }
-}
-@media (max-width: 600px) {
-  .projects-grid { grid-template-columns: 1fr; }
-  .hero-stats { gap: 1.5rem; }
-}
+  /* ── CTA ── */
+  .big-cta{background:var(--paper-2);max-width:none}
+  .big-cta-inner{max-width:1440px;margin:0 auto;padding:8rem 2.5rem;text-align:left;position:relative}
+  .big-cta h2{font-size:clamp(3rem, 8vw, 7rem);margin-bottom:2.5rem;max-width:12ch}
+  .big-cta-row{display:flex;gap:1.25rem;align-items:center;flex-wrap:wrap;margin-top:2rem}
+  .big-cta-note{font-family:var(--ff-mono);font-size:.75rem;color:var(--ink-mute);letter-spacing:.08em}
+  @media(max-width:760px){.big-cta-inner{padding:4rem 1.25rem}}
 
-/* ── ANIMACJE WEJŚCIA ── */
-[data-reveal] { opacity: 0; transform: translateY(24px); transition: opacity .6s ease, transform .6s ease; }
-[data-reveal].visible { opacity: 1; transform: none; }
-[data-reveal-d="1"] { transition-delay: .1s; }
-[data-reveal-d="2"] { transition-delay: .2s; }
-[data-reveal-d="3"] { transition-delay: .3s; }
+  /* ── FOOTER ── */
+  footer{background:var(--ink);color:rgba(245,241,232,.6)}
+  .foot-inner{max-width:1440px;margin:0 auto;padding:4rem 2.5rem 2rem;display:grid;grid-template-columns:2fr 1fr 1fr 1fr 1fr;gap:2.4rem}
+  .foot-brand{display:flex;align-items:center;margin-bottom:1.25rem}
+  .foot-brand img{height:72px;width:auto;display:block;filter:invert(1) brightness(1.05)}
+  .foot-col h5{font-family:var(--ff-mono);font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;color:var(--paper);margin-bottom:1rem}
+  .foot-col ul{list-style:none;display:flex;flex-direction:column;gap:.5rem;font-size:.88rem}
+  .foot-col a:hover{color:var(--paper)}
+  .foot-bottom{max-width:1440px;margin:0 auto;padding:1.5rem 2.5rem .5rem;border-top:1px solid rgba(245,241,232,.1);display:flex;justify-content:space-between;align-items:center;gap:1rem;font-family:var(--ff-mono);font-size:.72rem;letter-spacing:.04em;flex-wrap:wrap}
+  .foot-company{max-width:1440px;margin:0 auto;padding:.4rem 2.5rem 1.5rem;color:rgba(245,241,232,.45);font-family:var(--ff-mono);font-size:.66rem;letter-spacing:.04em;line-height:1.6}
+  .foot-company a{color:rgba(245,241,232,.6)}
+  .foot-company a:hover{color:rgba(245,241,232,.95)}
+  @media(max-width:760px){.foot-inner{grid-template-columns:1fr 1fr;padding:3rem 1.25rem 1rem;gap:2rem}.foot-bottom{padding:1.5rem 1.25rem}}
+
+  /* ── BRAND STAMP ── */
+  .brand-stamp{
+    max-width:1440px;margin:0 auto;
+    padding:7rem 2.5rem 8rem;
+    text-align:center;
+    display:flex;flex-direction:column;align-items:center;gap:1.5rem;
+    border-top:1px solid var(--line);
+  }
+  .stamp-logo{height:200px;width:auto;display:block;opacity:.95}
+  .stamp-line{font-family:var(--ff-serif);font-style:italic;font-size:1.6rem;color:var(--ink-mute);letter-spacing:.02em}
+  .stamp-cta{margin-top:.75rem}
+  @media(max-width:760px){.brand-stamp{padding:4.5rem 1.25rem 5rem}.stamp-logo{height:140px}.stamp-line{font-size:1.2rem}}
+
+  /* ── COOKIE BANNER ── */
+  .cookie-bar{
+    position:fixed;left:1.25rem;right:1.25rem;bottom:1.25rem;z-index:80;
+    max-width:560px;margin:0 auto;padding:1.1rem 1.25rem;
+    background:var(--ink);color:var(--paper);
+    border-radius:3px;box-shadow:0 12px 32px rgba(0,0,0,.25);
+    display:none;align-items:center;gap:1rem;flex-wrap:wrap;
+    font-size:.85rem;line-height:1.45;
+  }
+  .cookie-bar.show{display:flex}
+  .cookie-text{flex:1;min-width:200px}
+  .cookie-text a{color:var(--accent);text-decoration:underline;text-underline-offset:2px}
+  .cookie-text a:hover{color:var(--paper)}
+  .cookie-btn{padding:.55rem 1.1rem;border:none;background:var(--accent);color:var(--ink);font-family:var(--ff-sans);font-weight:600;font-size:.82rem;border-radius:2px;cursor:pointer;transition:background .15s}
+  .cookie-btn:hover{background:var(--paper)}
+
+  [data-reveal]{opacity:0;transform:translateY(20px);transition:opacity .7s ease,transform .7s ease}
+  [data-reveal].in{opacity:1;transform:none}
 </style>
 </head>
 <body>
 
-<!-- NAV -->
 <nav>
-  <a href="/" class="nav-logo">LESNO <span>Meble</span></a>
-  <a href="/konfigurator.html" class="nav-cta">
-    Zaprojektuj szafę
-    <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 7h8M7 3l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-  </a>
+  <div class="nav-inner">
+    <a href="#" class="brand"><img src="assets/logo.png" alt="ZabudujTO"/></a>
+    <div class="nav-links">
+      <a href="#proces">Jak to działa</a>
+      <a href="#kategorie">Realizacje</a>
+      <a href="#system">System</a>
+      <a href="#faq">Pytania</a>
+    </div>
+    <a href="konfigurator.html" class="nav-cta">
+      Zaprojektuj
+      <svg viewBox="0 0 12 12" fill="none"><path d="M2 6h8M7 3l3 3-3 3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </a>
+  </div>
 </nav>
 
 <!-- HERO -->
 <section class="hero">
-  <div class="hero-text">
-    <div class="hero-badge">Meble na wymiar · DIY</div>
-    <h1>Szafa wnękowa<br/>na wymiar —<br/><em>składasz sam</em></h1>
-    <p class="hero-sub">Zaprojektuj w konfiguratorze. My tniemy, oklejamy i wysyłamy gotowe formatki. Ty składasz w domu — bez ekipy montażowej, bez dopłat.</p>
-    <div class="hero-btns">
-      <a href="/konfigurator.html" class="btn-primary">
-        Otwórz konfigurator
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      </a>
-      <a href="#jak-to-dziala" class="btn-secondary">Jak to działa?</a>
+  <div class="hero-grid">
+    <div>
+      <div class="hero-meta">
+        <span>Est. 2024</span>
+        <span>Katowice / PL</span>
+        <span>Meble na wymiar · DIY</span>
+      </div>
+      <h1>Zabudowa<br/><em>na wymiar,</em><br/>składasz<br/>sam.</h1>
     </div>
-    <div class="hero-stats">
-      <div>
-        <div class="stat-n">2–4 tyg</div>
-        <div class="stat-l">orientacyjny czas realizacji</div>
-      </div>
-      <div>
-        <div class="stat-n">5 min</div>
-        <div class="stat-l">projektowanie online</div>
-      </div>
-      <div>
-        <div class="stat-n">PL</div>
-        <div class="stat-l">polscy dostawcy</div>
+    <div class="hero-right">
+      <div class="hero-photo">
+        <img src="assets/hero-collage.png" alt="Realizacje ZabudujTO — garderoba, szafa, zabudowa łazienkowa"/>
+        <div class="hero-photo-dims mono">PROJEKT · PRODUKCJA · MONTAŻ</div>
       </div>
     </div>
   </div>
-  <div class="hero-visual">
-    <div class="hero-schematic">
-      <div class="wardrobe-svg-wrap">
-        <!-- Schematyczna szafa wnękowa -->
-        <svg viewBox="0 0 440 520" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <!-- Tło / cień -->
-          <ellipse cx="220" cy="510" rx="160" ry="12" fill="rgba(24,24,26,0.08)"/>
-          <!-- Korpus zewnętrzny -->
-          <rect x="20" y="20" width="400" height="480" rx="4" fill="#F7F3EC" stroke="#18181A" stroke-width="2"/>
-          <!-- Bok lewy -->
-          <rect x="20" y="20" width="20" height="480" fill="#E8E3D8" stroke="#18181A" stroke-width="1.5"/>
-          <!-- Bok prawy -->
-          <rect x="400" y="20" width="20" height="480" fill="#E8E3D8" stroke="#18181A" stroke-width="1.5"/>
-          <!-- Wieniec górny -->
-          <rect x="20" y="20" width="400" height="20" fill="#E8E3D8" stroke="#18181A" stroke-width="1.5"/>
-          <!-- Wieniec dolny -->
-          <rect x="20" y="480" width="400" height="20" fill="#E8E3D8" stroke="#18181A" stroke-width="1.5"/>
-          <!-- Separator środkowy -->
-          <rect x="218" y="40" width="4" height="440" fill="#D8D3C8"/>
-          <!-- LEWA SEKCJA -->
-          <!-- Drążek górny -->
-          <rect x="50" y="70" width="150" height="4" rx="2" fill="#C8A96A"/>
-          <!-- Wieszaki -->
-          <line x1="75"  y1="74" x2="75"  y2="200" stroke="#9A7A3E" stroke-width="1.5"/>
-          <line x1="110" y1="74" x2="110" y2="200" stroke="#9A7A3E" stroke-width="1.5"/>
-          <line x1="145" y1="74" x2="145" y2="200" stroke="#9A7A3E" stroke-width="1.5"/>
-          <line x1="178" y1="74" x2="178" y2="200" stroke="#9A7A3E" stroke-width="1.5"/>
-          <!-- Uchwyt drążka -->
-          <circle cx="50"  cy="68" r="4" fill="#C8A96A" stroke="#9A7A3E" stroke-width="1"/>
-          <circle cx="200" cy="68" r="4" fill="#C8A96A" stroke="#9A7A3E" stroke-width="1"/>
-          <!-- Półki dolne lewa -->
-          <rect x="40" y="220" width="170" height="4" fill="#E8E3D8" stroke="#18181A" stroke-width="1"/>
-          <rect x="40" y="290" width="170" height="4" fill="#E8E3D8" stroke="#18181A" stroke-width="1"/>
-          <rect x="40" y="360" width="170" height="4" fill="#E8E3D8" stroke="#18181A" stroke-width="1"/>
-          <!-- Szuflady lewa -->
-          <rect x="44" y="368" width="162" height="50" rx="2" fill="#F0EBE0" stroke="#C8A96A" stroke-width="1.5"/>
-          <rect x="44" y="424" width="162" height="50" rx="2" fill="#F0EBE0" stroke="#C8A96A" stroke-width="1.5"/>
-          <!-- Uchwyty szuflad -->
-          <rect x="105" y="389" width="40" height="6" rx="3" fill="#C8A96A"/>
-          <rect x="105" y="445" width="40" height="6" rx="3" fill="#C8A96A"/>
-
-          <!-- PRAWA SEKCJA -->
-          <!-- Drążek krótki górny -->
-          <rect x="228" y="70" width="150" height="4" rx="2" fill="#C8A96A"/>
-          <circle cx="228" cy="68" r="4" fill="#C8A96A" stroke="#9A7A3E" stroke-width="1"/>
-          <circle cx="378" cy="68" r="4" fill="#C8A96A" stroke="#9A7A3E" stroke-width="1"/>
-          <!-- Wieszaki krótkie -->
-          <line x1="255" y1="74" x2="255" y2="160" stroke="#9A7A3E" stroke-width="1.5"/>
-          <line x1="288" y1="74" x2="288" y2="160" stroke="#9A7A3E" stroke-width="1.5"/>
-          <line x1="321" y1="74" x2="321" y2="160" stroke="#9A7A3E" stroke-width="1.5"/>
-          <line x1="354" y1="74" x2="354" y2="160" stroke="#9A7A3E" stroke-width="1.5"/>
-          <!-- Drążek drugi prawa -->
-          <rect x="228" y="168" width="150" height="4" rx="2" fill="#C8A96A"/>
-          <circle cx="228" cy="166" r="4" fill="#C8A96A" stroke="#9A7A3E" stroke-width="1"/>
-          <circle cx="378" cy="166" r="4" fill="#C8A96A" stroke="#9A7A3E" stroke-width="1"/>
-          <!-- Wieszaki krótkie 2 -->
-          <line x1="255" y1="172" x2="255" y2="252" stroke="#9A7A3E" stroke-width="1.5"/>
-          <line x1="288" y1="172" x2="288" y2="252" stroke="#9A7A3E" stroke-width="1.5"/>
-          <line x1="321" y1="172" x2="321" y2="252" stroke="#9A7A3E" stroke-width="1.5"/>
-          <line x1="354" y1="172" x2="354" y2="252" stroke="#9A7A3E" stroke-width="1.5"/>
-          <!-- Półki prawe -->
-          <rect x="224" y="262" width="170" height="4" fill="#E8E3D8" stroke="#18181A" stroke-width="1"/>
-          <rect x="224" y="320" width="170" height="4" fill="#E8E3D8" stroke="#18181A" stroke-width="1"/>
-          <rect x="224" y="378" width="170" height="4" fill="#E8E3D8" stroke="#18181A" stroke-width="1"/>
-          <rect x="224" y="436" width="170" height="4" fill="#E8E3D8" stroke="#18181A" stroke-width="1"/>
-
-          <!-- Wymiary -->
-          <!-- Szerokość strzałka -->
-          <line x1="20" y1="10" x2="420" y2="10" stroke="#C8A96A" stroke-width="1" stroke-dasharray="3,3"/>
-          <text x="220" y="8" text-anchor="middle" font-family="DM Sans, system-ui" font-size="11" fill="#9A7A3E">← 2000 mm →</text>
-          <!-- Wysokość strzałka -->
-          <line x1="10" y1="20" x2="10" y2="500" stroke="#C8A96A" stroke-width="1" stroke-dasharray="3,3"/>
-          <text x="8" y="265" text-anchor="middle" font-family="DM Sans, system-ui" font-size="11" fill="#9A7A3E" transform="rotate(-90 8 265)">2500 mm</text>
-        </svg>
-      </div>
+  <div class="hero-lede">
+    <p>Projektujesz online, my przycinamy <em>formatki</em> z płyt Kronospan i wysyłamy pod drzwi razem z instrukcją. Żadnej ekipy montażowej, żadnej wizyty stolarza — szafa wnękowa, garderoba lub zabudowa łazienkowa gotowa w weekend.</p>
+    <div class="hero-cta">
+      <a href="konfigurator.html" class="btn-primary">
+        Otwórz konfigurator
+        <svg viewBox="0 0 16 16" fill="none"><path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </a>
+      <a href="#proces" class="btn-ghost">Jak to działa</a>
     </div>
   </div>
 </section>
 
-<!-- PROOF BAR -->
-<div class="proof-bar">
-  <div class="proof-item"><strong>Płyta Kronospan</strong> — 263 kolory
-i dekory</div>
-  <div class="proof-dot"></div>
-  <div class="proof-item"><strong>Realizacja</strong> termin ustalany indywidualnie</div>
-  <div class="proof-dot"></div>
-  <div class="proof-item"><strong>Dostawa</strong> kurierem, cała Polska</div>
-  <div class="proof-dot"></div>
-  <div class="proof-item"><strong>Bez ekipy</strong> — składasz sam</div>
+<!-- TICKER -->
+<div class="ticker">
+  <div class="ticker-track">
+    <span>Płyta Kronospan 18 mm</span>
+    <span>Okucia GTV</span>
+    <span>Akcesoria REJS</span>
+    <span>Cięcie na Twój wymiar</span>
+    <span>Obrzeże ABS 0,8 / 2 mm</span>
+    <span>Dostawa w całej Polsce</span>
+    <span>Wycena online</span>
+    <span>Bez stolarza</span>
+    <!-- duplicate for seamless -->
+    <span>Płyta Kronospan 18 mm</span>
+    <span>Okucia GTV</span>
+    <span>Akcesoria REJS</span>
+    <span>Cięcie na Twój wymiar</span>
+    <span>Obrzeże ABS 0,8 / 2 mm</span>
+    <span>Dostawa w całej Polsce</span>
+    <span>Wycena online</span>
+    <span>Bez stolarza</span>
+  </div>
 </div>
 
-<!-- JAK TO DZIAŁA -->
-<section class="how" id="jak-to-dziala">
-  <div class="section-label">Proces</div>
-  <h2>Jak to <em>działa?</em></h2>
-  <p class="section-sub">Od pomiaru wnęki do gotowej szafy w kilku prostych krokach — bez żadnej technicznej wiedzy.</p>
-  <div class="how-grid">
-    <div class="how-card" data-reveal>
-      <div class="how-num">01</div>
-      <div class="how-icon">
-        <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="3" x2="9" y2="21"/><line x1="3" y1="9" x2="9" y2="9"/><line x1="3" y1="15" x2="9" y2="15"/></svg>
+<!-- PROCESS -->
+<section id="proces">
+  <div class="sec-head">
+    <div class="sec-label">Proces · 4 kroki</div>
+    <h2>Od pomiaru<br/>do gotowej <em>zabudowy</em>.</h2>
+  </div>
+  <div class="process">
+    <div class="process-step" data-reveal>
+      <div class="process-num">1 — Projekt</div>
+      <div class="process-illu">
+        <svg viewBox="0 0 100 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect x="4" y="4" width="92" height="52" stroke="#8a6a3d" stroke-width="1" fill="none"/>
+          <line x1="4" y1="20" x2="96" y2="20" stroke="#8a6a3d" stroke-width=".7" stroke-dasharray="2 2"/>
+          <line x1="4" y1="40" x2="96" y2="40" stroke="#8a6a3d" stroke-width=".7" stroke-dasharray="2 2"/>
+          <line x1="30" y1="4" x2="30" y2="56" stroke="#8a6a3d" stroke-width=".7" stroke-dasharray="2 2"/>
+          <line x1="70" y1="4" x2="70" y2="56" stroke="#8a6a3d" stroke-width=".7" stroke-dasharray="2 2"/>
+          <circle cx="70" cy="40" r="3" fill="#8a6a3d"/>
+        </svg>
       </div>
-      <h3>Zaprojektuj w konfiguratorze</h3>
-      <p>Wpisz wymiary wnęki, wybierz układ środka (drążki, półki, szuflady) i dekor płyty. Konfigurator wyliczy wycenę orientacyjną w czasie rzeczywistym.</p>
-      <div class="how-time">ok. 5 minut</div>
+      <h3>Zaprojektuj mebel online</h3>
+      <p>Wybierz typ, podaj wymiary wnęki, ułóż wnętrze — drążki, półki, szuflady. Konfigurator pokazuje wycenę na żywo.</p>
+      <div class="process-time">ok. 10 minut</div>
     </div>
-    <div class="how-card" data-reveal data-reveal-d="1">
-      <div class="how-num">02</div>
-      <div class="how-icon">
-        <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
+    <div class="process-step" data-reveal>
+      <div class="process-num">2 — Weryfikacja</div>
+      <div class="process-illu">
+        <svg viewBox="0 0 100 60" fill="none">
+          <path d="M20 30 L45 46 L85 14" stroke="#8a6a3d" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+          <circle cx="50" cy="30" r="25" stroke="#8a6a3d" stroke-width=".7" fill="none" stroke-dasharray="2 2"/>
+        </svg>
       </div>
-      <h3>My tniemy i oklejamy</h3>
-      <p>Przygotowujemy wszystkie formatki z płyt Kronospan — precyzyjnie pocięte i oklejone obrzeżem ABS. Każdy element oznaczony i zapakowany do wysyłki.</p>
-      <div class="how-time">termin indywidualny — zależy od kolejki</div>
+      <h3>Potwierdzamy projekt</h3>
+      <p>W ciągu 48 h sprawdzamy wymiary, dopytujemy o szczegóły. Dostajesz finalną wycenę do akceptacji.</p>
+      <div class="process-time">do 48 godzin</div>
     </div>
-    <div class="how-card" data-reveal data-reveal-d="2">
-      <div class="how-num">03</div>
-      <div class="how-icon">
-        <svg viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/><polyline points="7.5 4.21 12 6.81 16.5 4.21"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+    <div class="process-step" data-reveal>
+      <div class="process-num">3 — Produkcja</div>
+      <div class="process-illu">
+        <svg viewBox="0 0 100 60" fill="none">
+          <rect x="10" y="14" width="30" height="32" fill="none" stroke="#8a6a3d" stroke-width="1"/>
+          <rect x="45" y="20" width="24" height="26" fill="none" stroke="#8a6a3d" stroke-width="1"/>
+          <rect x="74" y="10" width="18" height="36" fill="none" stroke="#8a6a3d" stroke-width="1"/>
+          <line x1="10" y1="52" x2="92" y2="52" stroke="#8a6a3d" stroke-width=".7"/>
+        </svg>
       </div>
-      <h3>Odbierz i złóż sam</h3>
-      <p>Kurier dostarcza pod drzwi. W paczce: wszystkie formatki + komplet złączy + instrukcja montażu krok po kroku. Żadnych specjalnych narzędzi.</p>
-      <div class="how-time">jedno popołudnie — 3–6 godzin montażu</div>
+      <h3>Tniemy i oklejamy</h3>
+      <p>Formatki z płyt Kronospan, precyzyjne cięcie, obrzeże ABS. Etykietujemy i pakujemy z okuciami GTV / REJS.</p>
+      <div class="process-time">zwykle 2–4 tygodnie</div>
+    </div>
+    <div class="process-step" data-reveal>
+      <div class="process-num">4 — Montaż</div>
+      <div class="process-illu">
+        <svg viewBox="0 0 100 60" fill="none">
+          <rect x="20" y="8" width="60" height="44" fill="none" stroke="#8a6a3d" stroke-width="1"/>
+          <line x1="20" y1="22" x2="80" y2="22" stroke="#8a6a3d" stroke-width=".7"/>
+          <line x1="50" y1="22" x2="50" y2="52" stroke="#8a6a3d" stroke-width=".7"/>
+          <line x1="20" y1="37" x2="50" y2="37" stroke="#8a6a3d" stroke-width=".7"/>
+          <circle cx="35" cy="45" r="1.5" fill="#8a6a3d"/>
+          <circle cx="65" cy="37" r="1.5" fill="#8a6a3d"/>
+        </svg>
+      </div>
+      <h3>Składasz sam w domu</h3>
+      <p>Komplet formatek, okuć i instrukcja krok po kroku. Śrubokręt, poziomica, druga para rąk — wystarczy.</p>
+      <div class="process-time">jedno popołudnie · 3–6 h</div>
     </div>
   </div>
 </section>
 
-<!-- DLACZEGO DIY -->
-<section class="why" id="dlaczego-diy">
-  <div class="section-label">Dlaczego warto</div>
-  <h2>Taniej niż <em>salon meblowy,</em><br/>lepsza jakość niż gotowe</h2>
-  <div class="why-layout">
-    <div class="why-list">
-      <div class="why-item" data-reveal>
-        <div class="why-ico">💰</div>
-        <div>
-          <h4>Płacisz za materiał, nie za montaż</h4>
-          <p>Koszt ekipy montażowej to często 30–50% ceny szafy. U nas montaż robisz sam — w dwie godziny, ze śrubokrętem.</p>
-        </div>
+<!-- CATEGORIES -->
+<section class="cats" id="kategorie">
+  <div class="sec-head">
+    <div class="sec-label">Kategorie · 4 typy</div>
+    <h2>Cztery rodzaje<br/><em>zabudowy.</em></h2>
+  </div>
+  <div class="cat-grid">
+    <a href="konfigurator.html?typ=szafa" class="cat-card">
+      <img src="assets/real_szafa_przedpokoj.jpg" alt="Szafa wnękowa"/>
+      <div class="cat-info">
+        <div class="cat-num mono">1</div>
+        <div class="cat-name">Szafa wnękowa</div>
+        <div class="cat-range mono">600–3000 mm</div>
       </div>
-      <div class="why-item" data-reveal data-reveal-d="1">
-        <div class="why-ico">📐</div>
-        <div>
-          <h4>Cięcie na Twój wymiar</h4>
-          <p>Każda formatka cięta dokładnie wg podanych wymiarów — do milimetra. Małe szczeliny przy ścianach są normalne i maskuje się je listwami maskującymi.</p>
-        </div>
+    </a>
+    <a href="konfigurator.html?typ=garderoba" class="cat-card">
+      <img src="assets/real_garderoba_szuflady.jpg" alt="Garderoba"/>
+      <div class="cat-info">
+        <div class="cat-num mono">2</div>
+        <div class="cat-name">Garderoba</div>
+        <div class="cat-range mono">L-kształt / prosta</div>
       </div>
-      <div class="why-item" data-reveal data-reveal-d="2">
-        <div class="why-ico">🏭</div>
-        <div>
-          <h4>Sprawdzone materiały</h4>
-          <p>Płyta Kronospan — ponad 263 kolory i dekory. Akcesoria montażowe od polskich producentów: <strong>GTV, REJS, Laguna</strong> — prowadnice, zawiasy, uchwyty.</p>
-        </div>
+    </a>
+    <a href="konfigurator.html?typ=regal" class="cat-card">
+      <img src="assets/real_szafy_biurowe.jpg" alt="Regał"/>
+      <div class="cat-info">
+        <div class="cat-num mono">3</div>
+        <div class="cat-name">Regał &amp; biblioteczka</div>
+        <div class="cat-range mono">250–400 mm głęb.</div>
       </div>
-      <div class="why-item" data-reveal data-reveal-d="3">
-        <div class="why-ico">🚀</div>
-        <div>
-          <h4>Gotowe w 2–4 tygodnie</h4>
-          <p>Termin realizacji to zazwyczaj 2–4 tygodnie od zatwierdzenia projektu. W sezonie może być dłużej — podamy dokładny termin po złożeniu zamówienia.</p>
-        </div>
+    </a>
+    <a href="konfigurator.html?typ=lazienka" class="cat-card">
+      <img src="assets/real_lazienka_dark.jpg" alt="Zabudowa łazienkowa"/>
+      <div class="cat-info">
+        <div class="cat-num mono">4</div>
+        <div class="cat-name">Zabudowa łazienkowa</div>
+        <div class="cat-range mono">do sufitu / niska</div>
       </div>
+    </a>
+  </div>
+</section>
+
+<!-- SYSTEM -->
+<section class="system" id="system">
+  <div class="system-inner">
+    <div class="sec-head">
+      <div class="sec-label">System · Dlaczego DIY</div>
+      <h2>Płacisz za mebel,<br/>nie za <em>stolarza.</em></h2>
     </div>
-    <div class="why-compare" data-reveal>
-      <div class="compare-header">
-        <div class="compare-col lesno">✦ LESNO Meble</div>
-        <div class="compare-col salon">Salon meblowy</div>
+    <div class="system-grid">
+      <div class="system-item">
+        <div class="si-head"><span class="si-num">1</span><div class="si-title">Cięte w milimetrach</div></div>
+        <p>Każda formatka wycinana wg Twoich wymiarów — z tolerancją &lt; 1 mm. Oklejamy obrzeżem ABS <strong>0,5; 0,8 lub 2 mm</strong> na krawędziach widocznych. Maskownice i listwy wyrównawcze w zestawie.</p>
       </div>
-      <div class="compare-row">
-        <div class="compare-cell good">Wymiary na zamówienie</div>
-        <div class="compare-cell bad">Wymiary standardowe</div>
+      <div class="system-item">
+        <div class="si-head"><span class="si-num">2</span><div class="si-title">Sprawdzone akcesoria</div></div>
+        <p>Okucia głównie <strong>GTV</strong> i <strong>REJS</strong> — zawiasy puszkowe, uchwyty, prowadnice, drążki, kosze cargo, profile do drzwi przesuwnych, nóżki regulowane. Polskie marki, dostępne latami.</p>
       </div>
-      <div class="compare-row">
-        <div class="compare-cell good">Realizacja 5–10 dni</div>
-        <div class="compare-cell bad">Czekanie 6–8 tygodni</div>
+      <div class="system-item">
+        <div class="si-head"><span class="si-num">3</span><div class="si-title">Montaż z instrukcją</div></div>
+        <p>Z paczką dostajesz schemat montażu, oznaczone formatki (literki na krawędziach) i listę wszystkich okuć. Nie potrzebujesz wiercenia w płytach — wszystkie otwory są już zrobione fabrycznie.</p>
       </div>
-      <div class="compare-row">
-        <div class="compare-cell good">Płyta Kronospan 18mm</div>
-        <div class="compare-cell bad">Często 16mm lub brak info</div>
-      </div>
-      <div class="compare-row">
-        <div class="compare-cell good">Cena bez montażu</div>
-        <div class="compare-cell bad">Montaż wliczony w cenę</div>
-      </div>
-      <div class="compare-row">
-        <div class="compare-cell good">263 kolory i dekory do wyboru</div>
-        <div class="compare-cell bad">Ograniczona paleta kolorów</div>
-      </div>
-      <div class="compare-row">
-        <div class="compare-cell good">Wycena online — natychmiast</div>
-        <div class="compare-cell bad">Czekasz na konsultanta</div>
+      <div class="system-item">
+        <div class="si-head"><span class="si-num">4</span><div class="si-title">Wycena na żywo</div></div>
+        <p>W konfiguratorze widzisz cenę zanim coś zamówisz. Bez rozmów z handlowcem, bez czekania. Finalna cena różni się od orientacyjnej <strong>zwykle &lt; 5 %</strong> — po sprawdzeniu wymiarów.</p>
       </div>
     </div>
   </div>
 </section>
 
-<!-- REALIZACJE -->
-<section class="projects" id="realizacje">
-  <div class="section-label">Realizacje</div>
-  <h2>Przykładowe <em>projekty</em></h2>
-  <p class="section-sub">Każda szafa powstaje od zera — zaprojektowana pod konkretną wnękę i potrzeby klienta.</p>
-  <div class="projects-grid">
-    <!-- Karta 1: Zabudowa przedpokój -->
-    <div class="project-card" data-reveal>
-      <div class="project-img">
-        <img src="real_szafy_biurowe.jpg" alt="Zabudowa przedpokój biało-dębowa" style="width:100%;height:100%;object-fit:cover"/>
-      </div>
-      <div class="project-info">
-        <div class="project-type">Zabudowa przedpokój</div>
-        <div class="project-title">Biel + Dąb Artisan, siedzisko</div>
-        <div class="project-meta">Zabudowa na wymiar · wieszaki + szafy + półka</div>
-      </div>
+<!-- WORK -->
+<section class="work">
+  <div class="sec-head">
+    <div class="sec-label">Realizacje · Wybrane</div>
+    <h2>Rzeczy które<br/><em>już stoją.</em></h2>
+  </div>
+  <div class="work-grid">
+    <div class="wcard w-1"><img src="assets/real_garderoba2.jpg" alt="Garderoba narożna biała"/><div class="wc-info"><div class="wc-type">014 · Garderoba narożna</div><div class="wc-title">Biel Alpejska, L-kształt</div></div></div>
+    <div class="wcard w-2"><img src="assets/real_garderoba_szuflady.jpg" alt="Garderoba z szufladami"/><div class="wc-info"><div class="wc-type">013 · Garderoba</div><div class="wc-title">Biel, szuflady Metabox</div></div></div>
+    <div class="wcard w-3"><img src="assets/real_lazienka_dark.jpg" alt="Zabudowa łazienkowa"/><div class="wc-info"><div class="wc-type">011 · Łazienka</div><div class="wc-title">Antracyt + beton</div></div></div>
+    <div class="wcard w-4"><img src="assets/real_szafa_przedpokoj.jpg" alt="Szafa przedpokój"/><div class="wc-info"><div class="wc-type">009 · Przedpokój</div><div class="wc-title">Biel + Dąb Artisan</div></div></div>
+    <div class="wcard w-5"><img src="assets/real_lazienka_jasna.jpg" alt="Łazienka jasna"/><div class="wc-info"><div class="wc-type">008 · Łazienka</div><div class="wc-title">Biel, szafka z lustrem</div></div></div>
+    <div class="wcard w-6"><img src="assets/real_szafy_biurowe.jpg" alt="Szafy biurowe"/><div class="wc-info"><div class="wc-type">006 · Biuro</div><div class="wc-title">Antracyt + Dąb, seria 6</div></div></div>
+  </div>
+</section>
+
+<!-- SUPPLIERS -->
+<section class="suppliers">
+  <div class="sec-head">
+    <div class="sec-label">Materiały · Dostawcy</div>
+    <h2>Pracujemy z <em>trzema</em><br/>polskimi markami.</h2>
+  </div>
+  <div class="supp-grid">
+    <div class="supp">
+      <div class="supp-role">Płyty</div>
+      <div class="supp-name serif">Kronospan</div>
+      <div class="supp-desc">Płyta meblowa laminowana 18 mm. Ponad 200 dekorów — jednobarwne, drewnopodobne, kamień i beton. Obrzeże ABS dobrane kolorystycznie.</div>
     </div>
-    <!-- Karta 2: Garderoba z szufladami -->
-    <div class="project-card" data-reveal data-reveal-d="1">
-      <div class="project-img">
-        <img src="real_garderoba_szuflady.jpg" alt="Garderoba narożna z szufladami" style="width:100%;height:100%;object-fit:cover"/>
-      </div>
-      <div class="project-info">
-        <div class="project-type">Garderoba narożna</div>
-        <div class="project-title">Biel Alpejska, narożnik L</div>
-        <div class="project-meta">Drążki + półki + szuflady Metabox</div>
-      </div>
+    <div class="supp">
+      <div class="supp-role">Okucia</div>
+      <div class="supp-name serif">GTV</div>
+      <div class="supp-desc">Prowadnice kulkowe i rolkowe, zawiasy puszkowe z cichym domykiem, złączki meblowe. Polski standard stolarski.</div>
     </div>
-    <!-- Karta 3: Łazienka dark -->
-    <div class="project-card" data-reveal data-reveal-d="2">
-      <div class="project-img">
-        <img src="real_lazienka_dark.jpg" alt="Szafka łazienkowa antracyt" style="width:100%;height:100%;object-fit:cover"/>
-      </div>
-      <div class="project-info">
-        <div class="project-type">Zabudowa łazienkowa</div>
-        <div class="project-title">Antracyt + beton, wysoka szafka</div>
-        <div class="project-meta">Szafka kolumnowa na wymiar · szuflady</div>
-      </div>
+    <div class="supp">
+      <div class="supp-role">Akcesoria</div>
+      <div class="supp-name serif">REJS</div>
+      <div class="supp-desc">Drążki garderobiane, stelaże, systemy półek i organizerów. Matowe wykończenia w czerni, chromie i antracycie.</div>
     </div>
-    <!-- Karta 4: Garderoba wnętrze -->
-    <div class="project-card" data-reveal>
-      <div class="project-img">
-        <img src="real_garderoba2.jpg" alt="Garderoba wnętrze białe" style="width:100%;height:100%;object-fit:cover"/>
-      </div>
-      <div class="project-info">
-        <div class="project-type">Garderoba</div>
-        <div class="project-title">Biel, duże wnętrze narożne</div>
-        <div class="project-meta">9200 × 2600 mm · drążki + półki</div>
-      </div>
-    </div>
-    <!-- Karta 5: Łazienka jasna -->
-    <div class="project-card" data-reveal data-reveal-d="1">
-      <div class="project-img">
-        <img src="real_lazienka_jasna.jpg" alt="Łazienka jasna szafka z lustrem" style="width:100%;height:100%;object-fit:cover"/>
-      </div>
-      <div class="project-info">
-        <div class="project-type">Zabudowa łazienkowa</div>
-        <div class="project-title">Biel, szafka z lustrem</div>
-        <div class="project-meta">Szafka lustrzana + słupek · na wymiar</div>
-      </div>
-    </div>
-    <!-- Karta 6: Szafy biurowe -->
-    <div class="project-card" data-reveal data-reveal-d="2">
-      <div class="project-img">
-        <img src="real_szafa_przedpokoj.jpg" alt="Szafy biurowe antracyt" style="width:100%;height:100%;object-fit:cover"/>
-      </div>
-      <div class="project-info">
-        <div class="project-type">Zabudowa biurowa</div>
-        <div class="project-title">Antracyt + Dąb, szafy zamykane</div>
-        <div class="project-meta">Seria 6 szaf biurowych · zamki</div>
-      </div>
-    </div>
-  
-  <p class="projects-note">📸 Kolejne realizacje już wkrótce. Masz pytanie o konkretny projekt? <a href="mailto:kontakt@lesno-meble.pl" style="color:var(--warm-d)">Napisz do nas</a>.</p>
+  </div>
 </section>
 
 <!-- FAQ -->
-<section class="faq" id="faq">
-  <div class="section-label">Pytania i odpowiedzi</div>
-  <h2>Najczęściej <em>zadawane pytania</em></h2>
-  <div class="faq-grid">
-    <div class="faq-item" data-reveal>
-      <h4>Czy naprawdę dam radę złożyć szafę sam?</h4>
-      <p>Tak. Formatki są precyzyjnie cięte i oznaczone. Dołączamy instrukcję montażu krok po kroku. Montaż typowej szafy to jedno spokojne popołudnie — zazwyczaj 3–6 godzin w zależności od wielkości i wyposażenia. Potrzebujesz śrubokręta, poziomicy i drugiej pary rąk do pomocy.</p>
+<section id="faq">
+  <div class="sec-head">
+    <div class="sec-label">FAQ · 6 pytań</div>
+    <h2>Rzeczy o które<br/><em>najczęściej</em> pytacie.</h2>
+  </div>
+  <div class="faq-list">
+    <div class="faq-item">
+      <div class="faq-q"><span class="faq-q-idx mono">1</span><span>Czy naprawdę dam radę złożyć to sam?</span><span class="faq-q-plus">+</span></div>
+      <div class="faq-a">Tak — nasze meble są projektowane pod montaż DIY. Każda formatka jest <strong>oznaczona literką i numerem</strong>, otwory są już wywiercone, okucia spakowane w opisanych woreczkach. Dołączamy ilustrowaną instrukcję. Potrzebujesz śrubokręta, poziomicy i drugiej pary rąk. Montaż typowej szafy to 3–6 godzin.</div>
     </div>
-    <div class="faq-item" data-reveal data-reveal-d="1">
-      <h4>Co jeśli źle zmierzę wnękę?</h4>
-      <p>Przed realizacją weryfikujemy projekt i kontaktujemy się gdy coś budzi wątpliwości. Wnęki rzadko są idealne — zalecamy pomiar <strong>w 12 punktach</strong> (szerokość i wysokość w 3–4 miejscach, głębokość w rogach). Do zamówienia dołącz szkic z wymiarami lub skorzystaj z naszej karty pomiarowej — wyślemy ją po złożeniu zapytania.</p>
+    <div class="faq-item">
+      <div class="faq-q"><span class="faq-q-idx mono">2</span><span>Co jeśli źle zmierzę wnękę?</span><span class="faq-q-plus">+</span></div>
+      <div class="faq-a">W konfiguratorze masz <strong>tryb zaawansowany</strong> — mierzysz w 16 punktach (szerokość w 4 poziomach, wysokość w 4 pionach, przekątne, głębokości w rogach). System podpowie czy wnęka jest prostokątem, czy potrzebuje listew kompensacyjnych.</div>
     </div>
-    <div class="faq-item" data-reveal data-reveal-d="2">
-      <h4>Jakie płyty są używane?</h4>
-      <p>Płyty Kronospan 18mm — sprawdzony producent. Obrzeże ABS klejone na gorąco: standardowo <strong>0,8mm</strong> (estetyczne, subtelne wykończenie) lub <strong>2mm</strong> (bardziej odporne). Wybierasz spośród ponad 263 kolorów i dekorów — podaj preferencje w uwagach przy zamówieniu.</p>
+    <div class="faq-item">
+      <div class="faq-q"><span class="faq-q-idx mono">3</span><span>Jakie materiały wykorzystujecie?</span><span class="faq-q-plus">+</span></div>
+      <div class="faq-a">Płyty <strong>Kronospan</strong> 18 mm, plecy HDF 3 mm, obrzeże ABS 0,5; 0,8 lub 2 mm. Okucia <strong>GTV</strong>, akcesoria <strong>REJS</strong> i <strong>Laguna</strong>. Do wyboru ponad 200 dekorów — od jednobarwnych bieli przez dęby i orzechy po betony i marmury.</div>
     </div>
-    <div class="faq-item" data-reveal data-reveal-d="3">
-      <h4>Ile kosztuje dostawa?</h4>
-      <p>Dostawa kurierem jest doliczana do zamówienia i zależy od gabarytów paczki. Orientacyjny koszt to 150–250 zł. Dostarczamy na terenie całej Polski.</p>
+    <div class="faq-item">
+      <div class="faq-q"><span class="faq-q-idx mono">4</span><span>Ile kosztuje dostawa?</span><span class="faq-q-plus">+</span></div>
+      <div class="faq-a">Dostawa kurierska na paletę — zwykle <strong>500–800 zł</strong>, zależnie od gabarytu. Dostarczamy w całej Polsce. Szczegóły podajemy przy finalnej wycenie.</div>
     </div>
-    <div class="faq-item" data-reveal>
-      <h4>Czy mogę zamówić tylko część — np. same półki?</h4>
-      <p>Tak, realizujemy zamówienia na pojedyncze formatki. Minimalna wartość takiego zamówienia to 250 zł brutto.</p>
+    <div class="faq-item">
+      <div class="faq-q"><span class="faq-q-idx mono">5</span><span>Czy mogę zamówić tylko pojedyncze formatki?</span><span class="faq-q-plus">+</span></div>
+      <div class="faq-a">Tak. Minimalna wartość zamówienia <strong>250 zł brutto</strong>. Cięcie, obrzeże, wszystko — wpisujesz wymiary i potrzeby w uwagach.</div>
     </div>
-    <div class="faq-item" data-reveal data-reveal-d="1">
-      <h4>Czy wycena w konfiguratorze jest wiążąca?</h4>
-      <p>Wycena jest orientacyjna — finalna cena pojawia się po weryfikacji projektu przez nas. Różnica zwykle nie przekracza 5–10%. Nie ma żadnych ukrytych kosztów.</p>
+    <div class="faq-item">
+      <div class="faq-q"><span class="faq-q-idx mono">6</span><span>Czy wycena z konfiguratora jest wiążąca?</span><span class="faq-q-plus">+</span></div>
+      <div class="faq-a">Jest <strong>orientacyjna</strong>. Po wysłaniu projektu weryfikujemy wymiary, dobór dekoru i akcesoriów — finalna cena różni się zwykle &lt; 5 %. Akceptujesz wtedy ostateczną kwotę przed rozpoczęciem produkcji.</div>
     </div>
   </div>
 </section>
 
-<!-- CTA KOŃCOWE -->
-<section class="cta-section">
-  <div class="section-label" style="justify-content:center;color:var(--warm)">Zacznij teraz</div>
-  <h2>Zaprojektuj swoją szafę<br/><em>w 5 minut</em></h2>
-  <p class="section-sub">Konfigurator prowadzi Cię krok po kroku. Bez rejestracji, bez zobowiązań — sprawdź cenę przed złożeniem zamówienia.</p>
-  <a href="/konfigurator.html" class="btn-primary">
+<!-- BIG CTA -->
+<section class="big-cta">
+  <div class="big-cta-inner">
+    <div class="sec-label">Start</div>
+    <h2>Zaprojektuj<br/>swój mebel<br/><em>teraz.</em></h2>
+    <div class="big-cta-row">
+      <a href="konfigurator.html" class="btn-primary">
+        Otwórz konfigurator
+        <svg viewBox="0 0 16 16" fill="none"><path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </a>
+      <span class="big-cta-note">Bez rejestracji · Wycena w 5 minut</span>
+    </div>
+  </div>
+</section>
+
+<!-- BRAND STAMP -->
+<section class="brand-stamp" data-reveal>
+  <img src="assets/logo.png" alt="ZabudujTO" class="stamp-logo"/>
+  <p class="stamp-line">Zaprojektuj. Zamów. Złóż.</p>
+  <a href="konfigurator.html" class="btn-primary stamp-cta">
     Otwórz konfigurator
-    <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    <svg viewBox="0 0 16 16" fill="none"><path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
   </a>
-  <div class="cta-guarantee">
-    <span>✦ Bez rejestracji</span>
-    <span>✦ Wycena w czasie rzeczywistym</span>
-    <span>✦ Bezpłatna konsultacja</span>
-  </div>
 </section>
 
-<!-- FOOTER -->
 <footer>
-  <div>
-    <strong style="color:rgba(255,255,255,.7);font-family:'Cormorant Garamond',serif;font-size:1.1rem">LESNO Meble</strong>
-    <span style="margin-left:1rem">© 2026</span>
+  <div class="foot-inner">
+    <div class="foot-col">
+      <div class="foot-brand"><img src="assets/logo.png" alt="ZabudujTO"/></div>
+      <p style="font-size:.88rem;line-height:1.6;max-width:34ch">Meble wnękowe na wymiar do samodzielnego montażu. Katowice · Polska.</p>
+    </div>
+    <div class="foot-col">
+      <h5>Produkty</h5>
+      <ul>
+        <li><a href="konfigurator.html?typ=szafa">Szafa wnękowa</a></li>
+        <li><a href="konfigurator.html?typ=garderoba">Garderoba</a></li>
+        <li><a href="konfigurator.html?typ=regal">Regał</a></li>
+        <li><a href="konfigurator.html?typ=lazienka">Zabudowa łazienkowa</a></li>
+      </ul>
+    </div>
+    <div class="foot-col">
+      <h5>Strona</h5>
+      <ul>
+        <li><a href="#proces">Jak to działa</a></li>
+        <li><a href="#system">System DIY</a></li>
+        <li><a href="#faq">Pytania</a></li>
+        <li><a href="konfigurator.html">Konfigurator</a></li>
+      </ul>
+    </div>
+    <div class="foot-col">
+      <h5>Dokumenty</h5>
+      <ul>
+        <li><a href="regulamin.html">Regulamin</a></li>
+        <li><a href="polityka-prywatnosci.html">Polityka prywatności</a></li>
+        <li><a href="polityka-prywatnosci.html#cookies">Cookies</a></li>
+      </ul>
+    </div>
+    <div class="foot-col">
+      <h5>Kontakt</h5>
+      <ul>
+        <li><a href="mailto:kontakt@zabudujto.pl">kontakt@zabudujto.pl</a></li>        <li>Pon–Pt · 9:00–17:00</li>
+      </ul>
+    </div>
   </div>
-  <div style="display:flex;gap:1.5rem;align-items:center">
-    <a href="mailto:kontakt@lesno-meble.pl">kontakt@lesno-meble.pl</a>
-    <a href="/konfigurator.html">Konfigurator</a>
+  <div class="foot-bottom">
+    <span>© 2026 ZabudujTO · Wszystkie prawa zastrzeżone</span>
+    <span>v2.0 · kwiecień 2026</span>
   </div>
 </footer>
 
 <script>
-// Reveal on scroll
-const observer = new IntersectionObserver((entries) => {
-  entries.forEach(e => { if(e.isIntersecting) e.target.classList.add('visible') })
-}, { threshold: 0.1 })
-document.querySelectorAll('[data-reveal]').forEach(el => observer.observe(el))
+  // Reveal
+  const io = new IntersectionObserver((es)=>es.forEach(e=>e.isIntersecting && e.target.classList.add('in')),{threshold:.15});
+  document.querySelectorAll('[data-reveal]').forEach(el=>io.observe(el));
+  // FAQ
+  document.querySelectorAll('.faq-item').forEach(it=>{
+    it.addEventListener('click',()=>it.classList.toggle('open'));
+  });
 </script>
+<!-- COOKIE BANNER -->
+<div class="cookie-bar" id="cookieBar">
+  <div class="cookie-text">
+    Korzystamy z plików cookies do działania serwisu i analityki. Więcej w <a href="polityka-prywatnosci.html#cookies">Polityce prywatności</a>.
+  </div>
+  <button class="cookie-btn" id="cookieAccept">Rozumiem</button>
+</div>
+
+<script>
+  // Cookie banner
+  (function(){
+    var KEY = 'zabudujto_cookies_v1';
+    var bar = document.getElementById('cookieBar');
+    try{
+      if(!localStorage.getItem(KEY)){
+        setTimeout(function(){ bar.classList.add('show'); }, 800);
+      }
+    }catch(e){ /* localStorage off */ }
+    document.getElementById('cookieAccept').addEventListener('click', function(){
+      try{ localStorage.setItem(KEY, '1'); }catch(e){}
+      bar.classList.remove('show');
+    });
+  })();
+</script>
+
 </body>
 </html>
