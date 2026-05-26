@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+
+# Strony nie do indeksowania (treści prawne — duplikaty występują na wielu stronach)
+# (zostawiamy dostęp — jeśli Google chce, niech indeksuje)
+
+Sitemap: https://www.zabudujto.pl/sitemap.xml
