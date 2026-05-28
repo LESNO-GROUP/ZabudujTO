@@ -1,60 +1,111 @@
+// ZabudujTO — Vercel Serverless Function
+// Odbiera multipart/form-data z konfiguratora i wysyła e-mail przez Brevo (Sendinblue) API.
+//
+// ENV VARS (ustawić w Vercel Project Settings → Environment Variables):
+//   BREVO_API_KEY          klucz API z https://app.brevo.com/settings/keys/api
+//   MAIL_FROM_EMAIL        nadawca, np. poseydongroup.tech@gmail.com (musi być zweryfikowany w Brevo)
+//   MAIL_FROM_NAME         np. "ZabudujTO Konfigurator"
+//   MAIL_TO                kontakt@zabudujto.pl
+
+export const config = {
+  api: {
+    bodyParser: false, // multipart parsujemy ręcznie
+    sizeLimit: '15mb',
+  },
+};
+
+import Busboy from 'busboy';
+
+function parseForm(req) {
+  return new Promise((resolve, reject) => {
+    const bb = Busboy({ headers: req.headers, limits: { fileSize: 11 * 1024 * 1024, files: 6 } });
+    const fields = {};
+    const files = [];
+    bb.on('field', (name, val) => {
+      fields[name] = val;
+    });
+    bb.on('file', (name, stream, info) => {
+      const chunks = [];
+      stream.on('data', c => chunks.push(c));
+      stream.on('end', () => {
+        files.push({
+          name: info.filename,
+          mime: info.mimeType || 'application/octet-stream',
+          buffer: Buffer.concat(chunks),
+        });
+      });
+    });
+    bb.on('finish', () => resolve({ fields, files }));
+    bb.on('error', reject);
+    req.pipe(bb);
+  });
+}
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' })
+    return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const { imie, email, tel, uwagi, konfiguracja } = req.body
+  const apiKey = process.env.BREVO_API_KEY;
+  const fromEmail = process.env.MAIL_FROM_EMAIL;
+  const fromName = process.env.MAIL_FROM_NAME || 'ZabudujTO Konfigurator';
+  const toEmail = process.env.MAIL_TO || 'kontakt@zabudujto.pl';
 
-  if (!imie || !email) {
-    return res.status(400).json({ error: 'Brak wymaganych pól' })
+  if (!apiKey || !fromEmail) {
+    console.error('Missing env: BREVO_API_KEY / MAIL_FROM_EMAIL');
+    return res.status(500).json({ error: 'Server misconfigured' });
   }
-
-  const tresc = `
-    <h2 style="color:#1a1a16;font-family:Arial,sans-serif;margin-bottom:16px">
-      Nowe zgłoszenie z konfiguratora — zabudujto.pl
-    </h2>
-    <table style="font-family:Arial,sans-serif;font-size:14px;border-collapse:collapse;width:100%;max-width:600px">
-      <tr><td style="padding:8px 12px;font-weight:bold;width:160px;background:#f7f3ed">Imię i nazwisko</td><td style="padding:8px 12px">${imie}</td></tr>
-      <tr><td style="padding:8px 12px;font-weight:bold;background:#f7f3ed">Email klienta</td><td style="padding:8px 12px"><a href="mailto:${email}">${email}</a></td></tr>
-      <tr><td style="padding:8px 12px;font-weight:bold;background:#f7f3ed">Telefon</td><td style="padding:8px 12px">${tel || '—'}</td></tr>
-      ${konfiguracja ? konfiguracja.map((row, i) =>
-        `<tr><td style="padding:8px 12px;font-weight:bold;background:${i%2===0?'#fff':'#f7f3ed'}">${row[0]}</td><td style="padding:8px 12px;background:${i%2===0?'#fff':'#f7f3ed'}">${row[1]}</td></tr>`
-      ).join('') : ''}
-      ${uwagi ? `<tr><td style="padding:8px 12px;font-weight:bold;background:#f7f3ed">Uwagi</td><td style="padding:8px 12px">${uwagi}</td></tr>` : ''}
-    </table>
-    <p style="font-family:Arial,sans-serif;font-size:11px;color:#999;margin-top:20px;border-top:1px solid #eee;padding-top:10px">
-      Wiadomość wysłana automatycznie z konfiguratora zabudujto.pl
-    </p>
-  `
 
   try {
-    const response = await fetch('https://api.brevo.com/v3/smtp/email', {
+    const { fields, files } = await parseForm(req);
+    const ref = fields.ref || 'ZT-' + Date.now();
+    const subject = fields.subject || `Nowe zgłoszenie ${ref}`;
+    const html = fields.html || '<p>Brak treści.</p>';
+    const replyTo = fields.email && /\S+@\S+\.\S+/.test(fields.email)
+      ? { email: fields.email, name: fields.name || '' }
+      : null;
+
+    const attachments = (files || []).map(f => ({
+      name: f.name,
+      content: f.buffer.toString('base64'),
+    }));
+
+    // dodaj payload JSON jako załącznik, żeby można było zarchiwizować
+    if (fields.payload) {
+      attachments.push({
+        name: `${ref}.json`,
+        content: Buffer.from(fields.payload, 'utf-8').toString('base64'),
+      });
+    }
+
+    const body = {
+      sender: { email: fromEmail, name: fromName },
+      to: [{ email: toEmail }],
+      subject,
+      htmlContent: html,
+      ...(replyTo ? { replyTo } : {}),
+      ...(attachments.length ? { attachment: attachments } : {}),
+    };
+
+    const r = await fetch('https://api.brevo.com/v3/smtp/email', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'api-key': process.env.BREVO_API_KEY
+        'api-key': apiKey,
+        Accept: 'application/json',
       },
-      body: JSON.stringify({
-        sender: {
-          name: 'Konfigurator ZabudujTO',
-          email: 'kontakt@zabudujto.pl'
-        },
-        to: [{ email: 'kontakt@zabudujto.pl', name: 'ZabudujTO' }],
-        replyTo: { email: email, name: imie },
-        subject: `Nowe zgłoszenie: ${konfiguracja?.[0]?.[1] || 'mebel'} — ${imie}`,
-        htmlContent: tresc
-      })
-    })
+      body: JSON.stringify(body),
+    });
 
-    if (response.ok || response.status === 201) {
-      return res.status(200).json({ success: true })
-    } else {
-      const err = await response.json()
-      console.error('Brevo error:', err)
-      return res.status(500).json({ error: err.message || 'Błąd Brevo' })
+    if (!r.ok) {
+      const txt = await r.text();
+      console.error('Brevo error:', r.status, txt);
+      return res.status(502).json({ error: 'Mail send failed', details: txt });
     }
+
+    return res.status(200).json({ ok: true, ref });
   } catch (err) {
-    console.error('Handler error:', err)
-    return res.status(500).json({ error: err.message })
+    console.error('Submit error:', err);
+    return res.status(500).json({ error: 'Internal error' });
   }
 }
