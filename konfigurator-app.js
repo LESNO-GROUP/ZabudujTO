@@ -1884,6 +1884,280 @@ function dimLabel(x1,y1,x2,y2,txt,dir){
 }
 
 // ────────────────────────────────────────────────────────────
+//  FILE UPLOAD — załączniki klienta
+// ────────────────────────────────────────────────────────────
+window.__attachments = window.__attachments || [];
+const MAX_FILES = 5;
+const MAX_TOTAL_BYTES = 10 * 1024 * 1024;
+
+function fmtBytes(n){
+  if(n < 1024) return n + ' B';
+  if(n < 1024*1024) return (n/1024).toFixed(1) + ' kB';
+  return (n/1024/1024).toFixed(2) + ' MB';
+}
+
+function renderFileList(){
+  const list = document.getElementById('fileList');
+  if(!list) return;
+  list.innerHTML = window.__attachments.map((f,i)=>`
+    <div class="file-item">
+      <svg class="file-item-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M9 1H4a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V5z M9 1v4h4" stroke-linejoin="round"/></svg>
+      <span class="file-item-name" title="${f.name}">${f.name}</span>
+      <span class="file-item-size mono">${fmtBytes(f.size)}</span>
+      <button class="file-item-remove" data-i="${i}" type="button" title="Usuń">×</button>
+    </div>
+  `).join('');
+  list.querySelectorAll('.file-item-remove').forEach(b=>{
+    b.onclick = ()=>{
+      window.__attachments.splice(+b.dataset.i, 1);
+      renderFileList();
+    };
+  });
+}
+
+function addFiles(files){
+  const arr = Array.from(files || []);
+  const allowed = /\.(pdf|jpe?g|png|dxf|dwg|webp|gif|heic|heif)$/i;
+  for(const f of arr){
+    if(window.__attachments.length >= MAX_FILES){ toast('Maks. '+MAX_FILES+' plików'); break; }
+    if(!allowed.test(f.name)){ toast('Niedozwolony format: '+f.name); continue; }
+    const total = window.__attachments.reduce((a,x)=>a+x.size,0) + f.size;
+    if(total > MAX_TOTAL_BYTES){ toast('Łączny rozmiar przekracza 10 MB'); break; }
+    window.__attachments.push(f);
+  }
+  renderFileList();
+}
+
+function initFileUpload(){
+  const drop = document.getElementById('fileDrop');
+  const input = document.getElementById('leadFiles');
+  if(!drop || !input || drop._bound) return;
+  drop._bound = true;
+  input.addEventListener('change', e=>{ addFiles(e.target.files); input.value=''; });
+  ['dragenter','dragover'].forEach(ev=>drop.addEventListener(ev, e=>{ e.preventDefault(); drop.classList.add('dragover'); }));
+  ['dragleave','drop'].forEach(ev=>drop.addEventListener(ev, e=>{ e.preventDefault(); drop.classList.remove('dragover'); }));
+  drop.addEventListener('drop', e=>{ addFiles(e.dataTransfer.files); });
+  renderFileList();
+}
+
+// ────────────────────────────────────────────────────────────
+//  FULL ORDER SPEC — używane do payload e-maila
+// ────────────────────────────────────────────────────────────
+function buildOrderSpec(refNo){
+  const pb = priceBreakdown();
+  const {w,h,d} = STATE.dim;
+  const matC = MATERIALS.find(m=>m.id===STATE.material) || MATERIALS[0];
+  const matF = STATE.splitFront ? (MATERIALS.find(m=>m.id===STATE.materialFront)||matC) : matC;
+  const baseTxt = (()=>{
+    if(STATE.base==='cokol') return 'Cokoł 100 mm';
+    if(STATE.base==='podloga') return 'Bezpośrednio na podłodze';
+    if(STATE.base==='nozki' && typeof LEGS!=='undefined'){
+      const l = LEGS.find(x=>x.id===STATE.leg) || LEGS[0];
+      if(!l) return 'Nóżki';
+      const c = (l.colors && (typeof LEG_COLORS!=='undefined') && LEG_COLORS[STATE.legColor]);
+      return `Nóżki ${l.brand} (H${l.h} mm)${c?', '+LEG_COLORS[STATE.legColor].name.toLowerCase():''}`;
+    }
+    return '—';
+  })();
+  const hinge = HINGES.find(x=>x.id===STATE.hinges) || HINGES[0];
+  const handle = HANDLES.find(x=>x.id===STATE.handle) || HANDLES[0];
+  const handleColorName = (handle.colors && (typeof HANDLE_COLORS!=='undefined') && HANDLE_COLORS[STATE.handleColor])
+    ? HANDLE_COLORS[STATE.handleColor].name : '';
+  const sliding = SLIDING_PROFILES.find(p=>p.id===STATE.slidingProfile) || SLIDING_PROFILES[0];
+  const slidingCol = SLIDING_COLORS.find(c=>c.id===STATE.slidingProfileColor) || SLIDING_COLORS[0];
+
+  const sections = STATE.sections.map((s,i)=>{
+    const items = s.items.map(it=>{
+      const t = ITEM_TYPES[it.type]; if(!t) return null;
+      const v = (it.variant && t.variants) ? t.variants.find(x=>x.id===it.variant) : null;
+      let line = `${t.name}: ${it.h} mm`;
+      if(v) line += ` — ${v.name}`;
+      if(it.frameColor) line += ` (${it.frameColor})`;
+      if(it.internal) line += ' [wewnętrzna]';
+      return line;
+    }).filter(Boolean);
+    const front = STATE.frontMode==='sliding' ? null : STATE.sectionFronts[i];
+    return {
+      idx: i+1, w: s.w,
+      front: STATE.frontMode==='sliding' ? '—' : (front?'z frontem':'otwarta'),
+      items
+    };
+  });
+
+  return {
+    ref: refNo,
+    timestamp: new Date().toISOString(),
+    customer: {
+      name: STATE.lead.name || '',
+      email: STATE.lead.email || '',
+      phone: STATE.lead.phone || '',
+      city: STATE.lead.city || '',
+      notes: STATE.lead.notes || '',
+    },
+    furniture: {
+      type: STATE.typeName || STATE.type,
+      dimensions_mm: { w, h, d },
+      uneven_walls: !!STATE.uneven,
+      base: baseTxt,
+      sections_count: STATE.sections.length,
+      sections,
+    },
+    materials: {
+      corpus: { name: matC.name, code: matC.code, price_per_sqm: matC.price },
+      fronts: STATE.splitFront
+        ? { name: matF.name, code: matF.code, price_per_sqm: matF.price }
+        : 'same as corpus',
+    },
+    fronts: STATE.frontMode==='sliding' ? {
+      mode: 'Drzwi przesuwne',
+      system: sliding.name + (sliding.brand?` (${sliding.brand})`:''),
+      color: slidingCol.name,
+      fill: sliding.divisible
+        ? `Podział na ${STATE.slidingSplits.count} pasy: ${STATE.slidingSplits.fills.slice(0,STATE.slidingSplits.count).map(fid=>(SLIDING_FILLS.find(f=>f.id===fid)||{}).name||fid).join(' / ')}`
+        : (sliding.fillable ? (SLIDING_FILLS.find(f=>f.id===STATE.slidingFill)||{}).name : 'Płyta (bezramowy)'),
+    } : {
+      mode: 'Fronty uchylne (zawiasy)',
+      hinges: hinge.name + (hinge.brand?` (${hinge.brand})`:''),
+      handle: handle.name + (handle.brand?` (${handle.brand})`:''),
+      handle_color: handleColorName,
+    },
+    accessories: {
+      lighting_led: !!STATE.accessories.oswietlenie,
+    },
+    pricing: {
+      material: pb.materialCost,
+      cutting: pb.cuttingCost,
+      edging: pb.edgingCost,
+      labor: pb.laborCost,
+      design: pb.designCost,
+      sections_inserts: pb.accCost,
+      hardware: pb.hardwareCost,
+      total_gross: pb.total,
+      total_net: pb.netto,
+      vat_rate: pb.vat,
+      board_m2: Number(pb.board_m2.toFixed(2)),
+      waste_pct: Math.round(pb.waste*100),
+    },
+    consents: {
+      rodo: !!STATE.lead.consent,
+      regulations: !!STATE.lead.regulations,
+    },
+  };
+}
+
+function buildSpecHTML(refNo){
+  const s = buildOrderSpec(refNo);
+  const TR = (k,v) => `<tr><td style="padding:7px 12px;background:#f5f1e8;border:1px solid #d9d3c4;font-weight:500;width:35%">${k}</td><td style="padding:7px 12px;border:1px solid #d9d3c4">${v}</td></tr>`;
+  const sections = s.furniture.sections.map(sec=>`
+    <div style="margin-bottom:14px;padding:10px 14px;background:#fafaf6;border-left:3px solid #b8915a">
+      <div style="font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:.06em;color:#6a6a62;margin-bottom:6px">
+        SEKCJA ${sec.idx} · ${sec.w} mm · ${sec.front}
+      </div>
+      <ul style="margin:0;padding-left:20px;color:#1a1a17;font-size:13px;line-height:1.6">
+        ${sec.items.map(i=>`<li>${i}</li>`).join('')}
+      </ul>
+    </div>`).join('');
+  const corpusName = `${s.materials.corpus.name} (kod ${s.materials.corpus.code})`;
+  const frontsName = s.materials.fronts === 'same as corpus' ? '— ten sam co korpus —'
+    : `${s.materials.fronts.name} (kod ${s.materials.fronts.code})`;
+  const fr = s.fronts;
+  const frBlock = fr.mode === 'Drzwi przesuwne'
+    ? TR('System frontów', fr.mode) + TR('Profil', fr.system) + TR('Kolor profilu', fr.color) + TR('Wypełnienie', fr.fill)
+    : TR('System frontów', fr.mode) + TR('Zawiasy', fr.hinges) + TR('Uchwyty', fr.handle + (fr.handle_color?` — ${fr.handle_color.toLowerCase()}`:''));
+  const fmtZL = n => new Intl.NumberFormat('pl-PL').format(n) + ' zł';
+  const p = s.pricing;
+  return `
+<table style="width:100%;max-width:720px;border-collapse:collapse;font-family:Inter,sans-serif;font-size:13px;color:#1a1a17">
+  <tr><td colspan="2" style="padding:14px 0">
+    <h2 style="margin:0;font-family:'Instrument Serif',serif;font-weight:400;font-size:22px">Nowe zamówienie — ${s.ref}</h2>
+    <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#6a6a62;margin-top:4px">${new Date(s.timestamp).toLocaleString('pl-PL')}</div>
+  </td></tr>
+
+  <tr><td colspan="2"><h3 style="margin:14px 0 6px;font-family:'Instrument Serif',serif;font-weight:400;font-size:17px;border-bottom:1px solid #d9d3c4;padding-bottom:4px">Klient</h3></td></tr>
+  ${TR('Imię i nazwisko', s.customer.name)}
+  ${TR('E-mail', s.customer.email ? `<a href="mailto:${s.customer.email}">${s.customer.email}</a>` : '—')}
+  ${TR('Telefon', s.customer.phone ? `<a href="tel:${s.customer.phone.replace(/\s/g,'')}">${s.customer.phone}</a>` : '—')}
+  ${TR('Lokalizacja', s.customer.city || '—')}
+  ${TR('Uwagi klienta', s.customer.notes ? s.customer.notes.replace(/\n/g,'<br>') : '—')}
+
+  <tr><td colspan="2"><h3 style="margin:14px 0 6px;font-family:'Instrument Serif',serif;font-weight:400;font-size:17px;border-bottom:1px solid #d9d3c4;padding-bottom:4px">Mebel</h3></td></tr>
+  ${TR('Typ zabudowy', s.furniture.type)}
+  ${TR('Wymiary (szer × wys × głęb)', `${s.furniture.dimensions_mm.w} × ${s.furniture.dimensions_mm.h} × ${s.furniture.dimensions_mm.d} mm`)}
+  ${s.furniture.uneven_walls ? TR('Ściany', '<strong style="color:#a8552f">krzywe — wymaga kontaktu</strong>') : ''}
+  ${TR('Osadzenie', s.furniture.base)}
+  ${TR('Liczba sekcji', s.furniture.sections_count)}
+  ${TR('Dekor korpusu', corpusName)}
+  ${TR('Dekor frontów', frontsName)}
+  ${frBlock}
+  ${TR('Oświetlenie LED', s.accessories.lighting_led ? 'TAK' : 'NIE')}
+
+  <tr><td colspan="2"><h3 style="margin:14px 0 6px;font-family:'Instrument Serif',serif;font-weight:400;font-size:17px;border-bottom:1px solid #d9d3c4;padding-bottom:4px">Układ sekcji</h3></td></tr>
+  <tr><td colspan="2" style="padding:8px 0">${sections}</td></tr>
+
+  <tr><td colspan="2"><h3 style="margin:14px 0 6px;font-family:'Instrument Serif',serif;font-weight:400;font-size:17px;border-bottom:1px solid #d9d3c4;padding-bottom:4px">Kosztorys (orientacyjnie)</h3></td></tr>
+  ${TR('Materiał (płyta + odpad '+p.waste_pct+'%)', fmtZL(p.material))}
+  ${TR('Cięcie', fmtZL(p.cutting))}
+  ${TR('Obrzeże', fmtZL(p.edging))}
+  ${TR('Robocizna', fmtZL(p.labor))}
+  ${TR('Projekt', fmtZL(p.design))}
+  ${TR('Wkłady sekcji', fmtZL(p.sections_inserts))}
+  ${TR('Okucia', fmtZL(p.hardware))}
+  ${TR('Zużycie płyty', p.board_m2.toFixed(2).replace('.',',') + ' m²')}
+  <tr><td style="padding:10px 12px;background:#1a1a17;color:#f5f1e8;font-weight:500">CENA NETTO</td><td style="padding:10px 12px;background:#1a1a17;color:#f5f1e8;font-family:'JetBrains Mono',monospace">${fmtZL(p.total_net)}</td></tr>
+  <tr><td style="padding:10px 12px;background:#1a1a17;color:#b8915a;font-weight:500">CENA BRUTTO (VAT ${Math.round(p.vat_rate*100)}%)</td><td style="padding:10px 12px;background:#1a1a17;color:#b8915a;font-family:'JetBrains Mono',monospace;font-size:16px">${fmtZL(p.total_gross)}</td></tr>
+
+  <tr><td colspan="2" style="padding-top:14px">
+    <div style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.06em;color:#6a6a62">
+      Zgody: RODO ${s.consents.rodo?'✓':'✗'} · Regulamin ${s.consents.regulations?'✓':'✗'}
+    </div>
+    <div style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.06em;color:#6a6a62;margin-top:4px">
+      Wiadomość wygenerowana automatycznie przez konfigurator zabudujto.pl
+    </div>
+  </td></tr>
+</table>`;
+}
+
+window.ZTOrder = { buildSpec: buildOrderSpec, buildHTML: buildSpecHTML };
+
+// ────────────────────────────────────────────────────────────
+//  SUBMIT — wysyłka do /api/send (multipart/form-data)
+// ────────────────────────────────────────────────────────────
+async function submitOrder(){
+  const ref = 'ZT-2026-' + String(Math.floor(Math.random()*90000)+10000);
+  const spec = buildOrderSpec(ref);
+  const html = buildSpecHTML(ref);
+  const fd = new FormData();
+  fd.append('ref', ref);
+  fd.append('payload', JSON.stringify(spec));
+  fd.append('html', html);
+  fd.append('email', spec.customer.email || '');
+  fd.append('phone', spec.customer.phone || '');
+  fd.append('name', spec.customer.name || '');
+  fd.append('subject', `Nowe zamówienie ${ref} — ${spec.furniture.type}, ${spec.furniture.dimensions_mm.w}×${spec.furniture.dimensions_mm.h}×${spec.furniture.dimensions_mm.d} mm`);
+  (window.__attachments||[]).forEach((f,i)=> fd.append('files', f, f.name));
+
+  const btn = document.getElementById('btnNext');
+  const lbl = document.getElementById('btnNextLabel');
+  const prevLbl = lbl ? lbl.textContent : '';
+  if(btn){ btn.disabled = true; if(lbl) lbl.textContent = 'Wysyłanie…'; }
+
+  try{
+    const res = await fetch('/api/send', { method:'POST', body: fd });
+    if(!res.ok){ throw new Error('HTTP '+res.status); }
+    // success
+    document.getElementById('successRef').textContent = ref;
+    document.getElementById('success').classList.add('show');
+    window.__attachments = [];
+    try{ localStorage.removeItem(STORAGE_KEY); }catch(e){}
+  }catch(err){
+    toast('Nie udało się wysłać. Spróbuj ponownie lub napisz na kontakt@zabudujto.pl');
+    console.error('Submit error:', err);
+  }finally{
+    if(btn){ btn.disabled = false; if(lbl) lbl.textContent = prevLbl; }
+  }
+}
+
+// ────────────────────────────────────────────────────────────
 //  SUMMARY
 // ────────────────────────────────────────────────────────────
 function renderSummary(){
@@ -2077,6 +2351,7 @@ function init(){
     el.value = STATE.lead[k] || '';
     el.addEventListener('input',()=>{ STATE.lead[k] = el.value; saveState(); });
   });
+  initFileUpload();
   const cons = document.getElementById('leadConsent');
   cons.checked = !!STATE.lead.consent;
   cons.addEventListener('change',()=>{ STATE.lead.consent = cons.checked; saveState(); });
@@ -2110,40 +2385,7 @@ function init(){
       if(!STATE.lead.email && !STATE.lead.phone){ toast('Podaj e-mail lub telefon'); return; }
       if(!STATE.lead.consent){ toast('Zaznacz zgodę RODO'); return; }
       if(!STATE.lead.regulations){ toast('Zaakceptuj Regulamin i Politykę prywatności'); return; }
-      const ref = 'ZT-2026-' + String(Math.floor(Math.random()*90000)+10000);
-      document.getElementById('successRef').textContent = ref;
-
-      // Wyślij przez Brevo
-      const pb = priceBreakdown();
-      const typ = (TYPES.find(t=>t.id===STATE.type)||{}).label || STATE.type || '—';
-      const mat = (MATERIALS.find(m=>m.id===STATE.material)||{}).name || STATE.material || '—';
-      const konfiguracja = [
-        ['Numer ref.', ref],
-        ['Typ zabudowy', typ],
-        ['Wymiary (szer × wys × gł)', `${STATE.dim.w} × ${STATE.dim.h} × ${STATE.dim.d} mm`],
-        ['Materiał / dekor', mat],
-        ['Liczba sekcji', String(STATE.sections.length)],
-        ['Drzwi', STATE.frontMode === 'sliding' ? 'Przesuwne' : 'Zawiasowe'],
-        ['Cena orientacyjna netto', pb.total ? (pb.total/1.23).toFixed(2) + ' zł' : '—'],
-        ['Cena orientacyjna brutto', pb.total ? pb.total.toFixed(2) + ' zł' : '—'],
-        ['Miasto / region', STATE.lead.city || '—'],
-        ['Uwagi', STATE.lead.notes || '—'],
-      ];
-      fetch('/api/send', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          imie:         STATE.lead.name,
-          email:        STATE.lead.email,
-          tel:          STATE.lead.phone,
-          uwagi:        STATE.lead.notes,
-          konfiguracja
-        })
-      }).catch(err => console.error('send error:', err));
-
-      document.getElementById('success').classList.add('show');
-      // clear saved config
-      try{ localStorage.removeItem(STORAGE_KEY); }catch(e){}
+      submitOrder();
       return;
     }
     goToStep(STATE.step+1);

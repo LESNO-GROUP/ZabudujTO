@@ -1,0 +1,9 @@
+{
+  "name": "zabudujto",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Konfigurator mebli wnękowych ZabudujTO",
+  "dependencies": {
+    "busboy": "^1.6.0"
+  }
+}
