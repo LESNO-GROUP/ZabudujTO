@@ -11,7 +11,7 @@ export default async function handler(req, res) {
 
   const tresc = `
     <h2 style="color:#1a1a16;font-family:Arial,sans-serif;margin-bottom:16px">
-      Nowe zgłoszenie z konfiguratora — lesno-meble.pl
+      Nowe zgłoszenie z konfiguratora — zabudujto.pl
     </h2>
     <table style="font-family:Arial,sans-serif;font-size:14px;border-collapse:collapse;width:100%;max-width:600px">
       <tr><td style="padding:8px 12px;font-weight:bold;width:160px;background:#f7f3ed">Imię i nazwisko</td><td style="padding:8px 12px">${imie}</td></tr>
@@ -23,13 +23,11 @@ export default async function handler(req, res) {
       ${uwagi ? `<tr><td style="padding:8px 12px;font-weight:bold;background:#f7f3ed">Uwagi</td><td style="padding:8px 12px">${uwagi}</td></tr>` : ''}
     </table>
     <p style="font-family:Arial,sans-serif;font-size:11px;color:#999;margin-top:20px;border-top:1px solid #eee;padding-top:10px">
-      Wiadomość wysłana automatycznie z konfiguratora lesno-meble.pl
+      Wiadomość wysłana automatycznie z konfiguratora zabudujto.pl
     </p>
   `
 
   try {
-    // Sender: używamy Gmail jako nadawcy (zweryfikowany w Brevo)
-    // Odbiorca: kontakt@lesno-meble.pl
     const response = await fetch('https://api.brevo.com/v3/smtp/email', {
       method: 'POST',
       headers: {
@@ -38,10 +36,10 @@ export default async function handler(req, res) {
       },
       body: JSON.stringify({
         sender: {
-          name: 'Konfigurator LESNO',
-          email: 'poseydongroup.tech@gmail.com'  // Gmail — zweryfikowany w Brevo
+          name: 'Konfigurator ZabudujTO',
+          email: 'kontakt@zabudujto.pl'
         },
-        to: [{ email: 'kontakt@lesno-meble.pl', name: 'LESNO Meble' }],
+        to: [{ email: 'kontakt@zabudujto.pl', name: 'ZabudujTO' }],
         replyTo: { email: email, name: imie },
         subject: `Nowe zgłoszenie: ${konfiguracja?.[0]?.[1] || 'mebel'} — ${imie}`,
         htmlContent: tresc
