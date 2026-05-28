@@ -2110,8 +2110,37 @@ function init(){
       if(!STATE.lead.email && !STATE.lead.phone){ toast('Podaj e-mail lub telefon'); return; }
       if(!STATE.lead.consent){ toast('Zaznacz zgodę RODO'); return; }
       if(!STATE.lead.regulations){ toast('Zaakceptuj Regulamin i Politykę prywatności'); return; }
-      const ref = 'LSN-2026-' + String(Math.floor(Math.random()*90000)+10000);
+      const ref = 'ZT-2026-' + String(Math.floor(Math.random()*90000)+10000);
       document.getElementById('successRef').textContent = ref;
+
+      // Wyślij przez Brevo
+      const pb = priceBreakdown();
+      const typ = (TYPES.find(t=>t.id===STATE.type)||{}).label || STATE.type || '—';
+      const mat = (MATERIALS.find(m=>m.id===STATE.material)||{}).name || STATE.material || '—';
+      const konfiguracja = [
+        ['Numer ref.', ref],
+        ['Typ zabudowy', typ],
+        ['Wymiary (szer × wys × gł)', `${STATE.dim.w} × ${STATE.dim.h} × ${STATE.dim.d} mm`],
+        ['Materiał / dekor', mat],
+        ['Liczba sekcji', String(STATE.sections.length)],
+        ['Drzwi', STATE.frontMode === 'sliding' ? 'Przesuwne' : 'Zawiasowe'],
+        ['Cena orientacyjna netto', pb.total ? (pb.total/1.23).toFixed(2) + ' zł' : '—'],
+        ['Cena orientacyjna brutto', pb.total ? pb.total.toFixed(2) + ' zł' : '—'],
+        ['Miasto / region', STATE.lead.city || '—'],
+        ['Uwagi', STATE.lead.notes || '—'],
+      ];
+      fetch('/api/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          imie:         STATE.lead.name,
+          email:        STATE.lead.email,
+          tel:          STATE.lead.phone,
+          uwagi:        STATE.lead.notes,
+          konfiguracja
+        })
+      }).catch(err => console.error('send error:', err));
+
       document.getElementById('success').classList.add('show');
       // clear saved config
       try{ localStorage.removeItem(STORAGE_KEY); }catch(e){}
