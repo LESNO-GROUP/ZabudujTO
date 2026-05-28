@@ -2119,6 +2119,53 @@ function buildSpecHTML(refNo){
 
 window.ZTOrder = { buildSpec: buildOrderSpec, buildHTML: buildSpecHTML };
 
+// ── PREVIEW → PNG (do załączania w mailu) ──────────────────
+async function renderViewToPNG(view, scale){
+  scale = scale || 2;
+  const svg = document.getElementById('cabinetSvg');
+  if(!svg) return null;
+  const oldView = STATE.previewView;
+  if(view && view !== oldView){
+    STATE.previewView = view;
+    renderPreview();
+  }
+  // poczekaj na font load + jedna ramka
+  if(document.fonts && document.fonts.ready) { try{ await document.fonts.ready; }catch(e){} }
+  await new Promise(r=>requestAnimationFrame(r));
+
+  // Wymiary z viewBox lub atrybutów
+  const vb = svg.viewBox && svg.viewBox.baseVal;
+  const W = (vb && vb.width)  || parseFloat(svg.getAttribute('width'))  || 600;
+  const H = (vb && vb.height) || parseFloat(svg.getAttribute('height')) || 700;
+
+  // klonujemy SVG i ustawiamy explicit width/height — żeby renderer canvas wiedział
+  const clone = svg.cloneNode(true);
+  clone.setAttribute('xmlns','http://www.w3.org/2000/svg');
+  clone.setAttribute('width', W);
+  clone.setAttribute('height', H);
+  if(!clone.getAttribute('viewBox')) clone.setAttribute('viewBox', `0 0 ${W} ${H}`);
+
+  const xml = new XMLSerializer().serializeToString(clone);
+  const dataUrl = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(xml);
+  const img = new Image();
+  await new Promise((res, rej)=>{ img.onload = res; img.onerror = rej; img.src = dataUrl; });
+
+  const canvas = document.createElement('canvas');
+  canvas.width  = Math.round(W * scale);
+  canvas.height = Math.round(H * scale);
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = '#f5f1e8';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+  // przywróć widok użytkownika
+  if(view && view !== oldView){
+    STATE.previewView = oldView;
+    renderPreview();
+  }
+  return new Promise(res => canvas.toBlob(b => res(b), 'image/png'));
+}
+
 // ────────────────────────────────────────────────────────────
 //  SUBMIT — wysyłka do /api/send (multipart/form-data)
 // ────────────────────────────────────────────────────────────
@@ -2135,6 +2182,15 @@ async function submitOrder(){
   fd.append('name', spec.customer.name || '');
   fd.append('subject', `Nowe zamówienie ${ref} — ${spec.furniture.type}, ${spec.furniture.dimensions_mm.w}×${spec.furniture.dimensions_mm.h}×${spec.furniture.dimensions_mm.d} mm`);
   (window.__attachments||[]).forEach((f,i)=> fd.append('files', f, f.name));
+  // doczep podgląd mebla — widok frontu i widok otwarty
+  try {
+    const pngFront = await renderViewToPNG('front');
+    if(pngFront) fd.append('files', pngFront, `${ref}-preview-front.png`);
+    const pngOpen = await renderViewToPNG('open');
+    if(pngOpen) fd.append('files', pngOpen, `${ref}-preview-open.png`);
+  } catch(e) {
+    console.warn('Preview render failed (ignoring):', e);
+  }
 
   const btn = document.getElementById('btnNext');
   const lbl = document.getElementById('btnNextLabel');

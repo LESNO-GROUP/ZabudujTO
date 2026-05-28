@@ -29,6 +29,15 @@
 <link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png"/>
 <meta name="theme-color" content="#1a1a17"/>
 
+<!-- Google Analytics 4 -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-56B7Z9955E"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-56B7Z9955E');
+</script>
+
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
 <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
@@ -77,7 +86,7 @@
   .prev-tab{padding:.32rem .6rem;border:1px solid var(--line);border-radius:2px;font-size:.66rem;letter-spacing:.06em;background:var(--paper);color:var(--ink-mute)}
   .prev-tab.on{background:var(--ink);color:var(--paper);border-color:var(--ink)}
   .prev-canvas{flex:1;position:relative;display:flex;align-items:center;justify-content:center;padding:2rem;overflow:hidden;background-image:linear-gradient(rgba(26,26,23,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(26,26,23,.04) 1px,transparent 1px);background-size:40px 40px}
-  #cabinetSvg{max-width:100%;max-height:100%;filter:drop-shadow(0 18px 36px rgba(26,26,23,.08))}
+  #cabinetSvg{max-width:100%;max-height:100%;overflow:visible;filter:drop-shadow(0 18px 36px rgba(26,26,23,.08))}
   .prev-foot{padding:.7rem 1.4rem;border-top:1px solid var(--line);display:flex;justify-content:space-between;gap:1rem;font-family:var(--ff-mono);font-size:.7rem;color:var(--ink-mute);letter-spacing:.04em;background:rgba(255,255,255,.5)}
   .prev-foot strong{color:var(--ink);font-weight:500}
 
@@ -377,6 +386,7 @@
   .consent a{color:var(--accent);text-decoration:underline;text-underline-offset:2px}
   .consent a:hover{color:var(--ink)}
     .lead-hint{font-family:var(--ff-sans);font-size:.65rem;color:var(--ink-mute);font-weight:400;text-transform:none;letter-spacing:0;margin-left:.4rem}
+  .attach-hint{font-size:.78rem;color:var(--ink);background:#fff8ed;border-left:3px solid var(--accent);padding:.55rem .8rem;border-radius:0 2px 2px 0;margin:.4rem 0 .6rem;line-height:1.5}
   .file-drop{position:relative;border:1px dashed var(--ink-mute);border-radius:2px;padding:1.1rem 1.25rem;background:var(--paper-2);cursor:pointer;transition:all .15s}
   .file-drop:hover,.file-drop.dragover{border-color:var(--accent);background:var(--paper)}
   .file-drop input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
@@ -554,7 +564,7 @@
         </div>
       </div>
       <div class="prev-canvas">
-        <svg id="cabinetSvg" viewBox="0 0 600 700" xmlns="http://www.w3.org/2000/svg"></svg>
+        <svg id="cabinetSvg" viewBox="-40 -15 680 730" xmlns="http://www.w3.org/2000/svg"></svg>
       </div>
       <div class="prev-foot">
         <div><strong id="pfDim">2000 × 2600 × 600</strong> mm · <span id="pfSections">3 sekcje</span></div>
@@ -636,8 +646,8 @@
                 <h5>Co podać do konfiguratora?</h5>
                 <ul>
                   <li><span>Wpisz <strong>najmniejsze wartości</strong> z każdego z 3 wymiarów (szer., wys., głęb.)</span></li>
-                  <li><span>Mebel projektujemy z <strong>listwami kompensacyjnymi</strong>, które wyrównują nierówności</span></li>
                   <li><span>Jeśli różnice przekraczają <strong>5 mm</strong> — zaznacz pole „krzywe ściany” poniżej</span></li>
+                  <li><span>W kroku 5 możesz <strong>załączyć zdjęcie wnęki</strong> — pomoże nam lepiej dopasować projekt</span></li>
                 </ul>
               </div>
             </div>
@@ -826,7 +836,8 @@
           <div class="lead-cell full"><label>Kod pocztowy + miasto</label><input type="text" id="leadCity" placeholder="40-001 Katowice"/></div>
           <div class="lead-cell full"><label>Uwagi (opcjonalnie)</label><textarea id="leadNotes" placeholder="Np. wybrany dekor spoza listy, termin realizacji, pytania…"></textarea></div>
           <div class="lead-cell full">
-            <label>Załączniki (opcjonalnie) <span class="lead-hint">PDF, JPG, PNG, DXF — do 5 plików, łącznie 10 MB</span></label>
+            <label>Załączniki — w tym <strong>zdjęcie wnęki</strong> <span class="lead-hint">PDF, JPG, PNG, DXF — do 5 plików, łącznie 10 MB</span></label>
+            <div class="attach-hint">Prosimy o zdjęcie wnęki, w której stanie mebel — pomoże nam to lepiej dopasować projekt i uniknąć poprawek.</div>
             <div class="file-drop" id="fileDrop">
               <input type="file" id="leadFiles" multiple accept=".pdf,.jpg,.jpeg,.png,.dxf,.dwg,image/*"/>
               <div class="file-drop-label">
@@ -898,7 +909,7 @@
 })();
 </script>
 
-<script src="konfigurator-data.js?v=154"></script>
-<script src="konfigurator-app.js?v=154"></script>
+<script src="konfigurator-data.js?v=157"></script>
+<script src="konfigurator-app.js?v=157"></script>
 </body>
 </html>
