@@ -70,8 +70,6 @@ export default async function handler(req, res) {
       content: f.buffer.toString('base64'),
     }));
 
-    // dodaj payload JSON jako załącznik, żeby można było zarchiwizować
-
     const body = {
       sender: { email: fromEmail, name: fromName },
       to: [{ email: toEmail }],
