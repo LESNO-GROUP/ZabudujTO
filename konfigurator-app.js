@@ -178,93 +178,85 @@ function shade(hex, factor){
 
 // ────────────────────────────────────────────────────────────
 //  CUT LIST — lista formatek, cięcia i obrzeże
-//  Zwraca: pieces[], pieceCount, cutMb (mb cięć), edgeMb (mb obrzeża)
+//  MODEL: każda sekcja = osobna szafka z własnymi ściankami
+//         (2 boki + wieniec górny + dolny + plecy HDF)
+//  Każda formatka płytowa oklejana z 3 stron (przód + dwa boki)
+//  Zwraca: pieces[], pieceCount, cutMb, edgeMb, corpusSqm, frontsSqm
 // ────────────────────────────────────────────────────────────
 function buildCutList(){
   const d = STATE.dim.d;
   const w = cabinetW(), h = cabinetH();
-  const T = 18;                     // grubość płyty
-  const innerH = h - 2*T;           // wysokość w świetle korpusu
+  const T = 18;
   const pieces = [];
-  const add = (name, pw, ph, qty, edges) => {
+  const add = (name, pw, ph, qty, edges, kind) => {
     if(pw<=0 || ph<=0 || qty<=0) return;
-    pieces.push({name, w:Math.round(pw), h:Math.round(ph), qty, edges});
+    pieces.push({name, w:Math.round(pw), h:Math.round(ph), qty, edges, kind: kind || 'corpus'});
   };
 
-  // korpus
-  const sl = STATE.slope;
-  if(sl && sl.on){
-    // boki: jeden pełnej wysokości, drugi obniżony
-    const hLo = Math.max(300, Math.min(sl.hLow, h));
-    add('Bok korpusu (wysoki)', d, h, 1, 1);
-    add('Bok korpusu (niski, skos)', d, hLo, 1, 1);
-    add('Wieniec górny (skos, cięty pod kątem)', w - 2*T, d, 1, 1);
-  } else {
-    add('Bok korpusu', d, h, 2, 1);
-    add('Wieniec górny', w - 2*T, d, 1, 1);
-  }
-  add('Wieniec dolny', w - 2*T, d, 1, 1);
-  // przegrody pionowe między sekcjami — przy skosie każda innej wysokości
-  const nDiv = Math.max(0, STATE.sections.length - 1);
-  if(sl && sl.on){
-    for(let i=0;i<nDiv;i++){
-      let x = T;
-      for(let k=0;k<=i;k++) x += STATE.sections[k].w + T;
-      add(`Przegroda pionowa ${i+1} (skos)`, d, Math.round(cabinetHAt(x) - 2*T), 1, 1);
-    }
-  } else {
-    add('Przegroda pionowa', d, innerH, nDiv, 1);
-  }
-
-  // półki w sekcjach
+  // ── każda sekcja jako osobna szafka ──
   STATE.sections.forEach((s,si)=>{
-    // uskok redukuje głębokość formatek w tej sekcji
+    const secH = Math.round(sectionCabinetH(si));       // wysokość szafki
+    const liftMm = s.lift || 0;
     const dSec = notchAffects(si) ? Math.max(100, d - (STATE.notch.d||150)) : d;
-    const notchTag = notchAffects(si) ? ` — głęb. ${dSec} mm (uskok)` : '';
+    const notchTag = notchAffects(si) ? ` · głęb. ${dSec}` : '';
+    const tag = `S${si+1} (${s.w} mm)`;
+
+    // boki szafki — pełna wysokość korpusu tej sekcji
+    add(`Bok szafki ${tag}${notchTag}`, secH, dSec, 2, 3);
+    // wieniec górny + dolny (w świetle między bokami)
+    add(`Wieniec górny ${tag}${notchTag}`, s.w, dSec, 1, 3);
+    add(`Wieniec dolny ${tag}${notchTag}`, s.w, dSec, 1, 3);
+    // dno podniesionej sekcji (lift) — dodatkowa półka nośna
+    if(liftMm > 0) add(`Dno nad podłogą ${tag}`, s.w, dSec, 1, 3);
+    // plecy HDF (bez obrzeża)
+    add(`Plecy HDF ${tag}`, s.w + 2*T, secH, 1, 0, 'hdf');
+
+    // wyposażenie wnętrza
     const shelves = s.items.filter(it=>it.type==='polka');
-    if(shelves.length) add(`Półka (sekcja ${s.w} mm)${notchTag}`, s.w, dSec, shelves.length, 1);
-    // półki z przegrodą — dodatkowa pionowa przegródka
+    if(shelves.length) add(`Półka ${tag}${notchTag}`, s.w, dSec, shelves.length, 3);
     const withDiv = shelves.filter(it=>it.variant==='przegroda').length;
-    if(withDiv) add('Przegroda w półce', dSec, 250, withDiv, 1);
-    // siedzisko — wzmocniona deska
+    if(withDiv) add(`Przegroda w półce ${tag}`, 250, dSec, withDiv, 3);
     const seats = s.items.filter(it=>it.type==='siedzisko');
-    if(seats.length) add(`Siedzisko płytowe (sekcja ${s.w} mm)`, s.w, dSec, seats.length, 1);
+    if(seats.length) add(`Siedzisko płytowe ${tag}`, s.w, dSec, seats.length, 3);
   });
 
-  // przelotowa półka
+  // przelotowa półka — jedna deska przez kilka szafek
   if(STATE.band){
     let bandW = 0;
-    for(let i=STATE.band.from; i<=STATE.band.to && i<STATE.sections.length; i++) bandW += STATE.sections[i].w;
-    if(bandW>0) add('Półka przelotowa', bandW, d, 1, 1);
+    for(let i=STATE.band.from; i<=STATE.band.to && i<STATE.sections.length; i++){
+      bandW += STATE.sections[i].w + 2*T;
+    }
+    if(bandW>0) add('Półka przelotowa', bandW - 2*T, d, 1, 3);
   }
 
   // fronty
   if(STATE.frontMode==='sliding'){
     const panels = Math.min(4, Math.max(2, STATE.sections.length));
-    add('Front przesuwny (wkład)', Math.round(w/panels), h, panels, 4);
+    add('Front przesuwny (wkład)', Math.round(w/panels), h, panels, 4, 'front');
   } else {
     STATE.sections.forEach((s,si)=>{
       if(!STATE.sectionFronts[si]) return;
       const fh = (sectionCabinetH(si) - 2*T) - (bandSpans(si) ? STATE.band.h : 0) - (s.lift||0);
-      add(`Front uchylny (sekcja ${s.w} mm)`, s.w - 4, fh, 1, 4);
+      add(`Front uchylny ${`S${si+1}`} (${s.w} mm)`, s.w - 4, fh, 1, 4, 'front');
     });
   }
 
-  // blendy
+  // blendy maskujące
   const bl = STATE.blenda || {left:0,right:0,top:0};
-  if(bl.left)  add('Blenda lewa',  bl.left,  STATE.dim.h, 1, 3);
-  if(bl.right) add('Blenda prawa', bl.right, STATE.dim.h, 1, 3);
-  if(bl.top)   add('Blenda górna', STATE.dim.w, bl.top, 1, 3);
+  if(bl.left)  add('Blenda lewa',  bl.left,  STATE.dim.h, 1, 3, 'front');
+  if(bl.right) add('Blenda prawa', bl.right, STATE.dim.h, 1, 3, 'front');
+  if(bl.top)   add('Blenda górna', STATE.dim.w, bl.top, 1, 3, 'front');
 
-  // plecy (HDF — bez obrzeża)
-  add('Plecy (HDF)', w, h, 1, 0);
-
-  let cutMb = 0, edgeMb = 0, pieceCount = 0;
+  let cutMb = 0, edgeMb = 0, pieceCount = 0, corpusSqm = 0, frontsSqm = 0, hdfSqm = 0;
   pieces.forEach(p=>{
     pieceCount += p.qty;
+    const sqm = p.qty * (p.w/1000) * (p.h/1000);
+    if(p.kind === 'front') frontsSqm += sqm;
+    else if(p.kind === 'hdf') hdfSqm += sqm;
+    else corpusSqm += sqm;
     // cięcie ≈ obwód formatki
-    cutMb  += p.qty * (2*(p.w + p.h))/1000;
-    // obrzeże: 1 = dłuższa krawędź, 3 = 3 krawędzie, 4 = pełny obwód
+    cutMb += p.qty * (2*(p.w + p.h))/1000;
+    // obrzeże: 3 = przód + dwa boki, 4 = pełny obwód, 0 = brak (HDF)
     if(p.edges === 4)      edgeMb += p.qty * (2*(p.w + p.h))/1000;
     else if(p.edges === 3) edgeMb += p.qty * (p.w + 2*p.h)/1000;
     else if(p.edges === 1) edgeMb += p.qty * Math.max(p.w, p.h)/1000;
@@ -275,7 +267,10 @@ function buildCutList(){
     pieceCount,
     cutMb: Math.round(cutMb*10)/10,
     edgeMb: Math.round(edgeMb*10)/10,
-    cutsCount: pieceCount * 4,   // szacunkowa liczba przejść piły
+    cutsCount: pieceCount * 4,
+    corpusSqm: Math.round(corpusSqm*1000)/1000,
+    frontsSqm: Math.round(frontsSqm*1000)/1000,
+    hdfSqm: Math.round(hdfSqm*1000)/1000,
   };
 }
 
@@ -294,56 +289,32 @@ function priceBreakdown(){
   const d = STATE.dim.d;
   const w = cabinetW(), h = cabinetH();
 
-  // 1. Powierzchnie płyty (przy skosie boki i plecy mniejsze)
-  const sl = STATE.slope;
-  const hAvg = (sl && sl.on) ? (h + Math.max(300, Math.min(sl.hLow, h)))/2 : h;
-  const carcass_m2 = ((h + (sl&&sl.on ? Math.max(300,Math.min(sl.hLow,h)) : h))*d + 2*w*d + w*hAvg)/1e6;
-  let shelf_m2 = 0;
+  // 1. Powierzchnie płyty — z REALNEJ listy formatek (każda sekcja = osobna szafka)
+  const cut = buildCutList();
+  const corpus_m2 = Math.max(0.1, cut.corpusSqm);
+  const fronts_m2 = cut.frontsSqm;
+  const hdf_m2 = cut.hdfSqm;
+  const board_m2 = corpus_m2 + fronts_m2;
+
+  // akcesoria / wkłady sekcji
   let accCost = 0;
   STATE.sections.forEach(s=>{
     s.items.forEach(it=>{
       const t = ITEM_TYPES[it.type]; if(!t) return;
-      if(it.type==='polka') shelf_m2 += (s.w/1000)*(d/1000);
-      // akcesoria (wariant lub bazowa cena)
       let p = t.price || 0;
       if(it.variant && t.variants){
         const v = t.variants.find(vv=>vv.id===it.variant);
         if(v) p = v.price || 0;
       } else if(it.type==='szuflady'){
-        // legacy multi-drawer module
         const count = (it.opts && it.opts.count) || 4;
         p = 80 * count;
       }
       accCost += p;
     });
   });
-  const fronts_m2_full = (w*hAvg)/1e6;
-  // uskok — odejmij powierzchnię przeszkody od płyty i frontów
-  const notchArea_m2 = (STATE.notch && STATE.notch.on)
-    ? (STATE.notch.w/1000) * (STATE.notch.h/1000) * Math.min(1, (STATE.notch.d||150) / d)
-    : 0;
-  // przelotowa półka — dodatkowa deska (szer. obejmowanych sekcji × głęb.)
-  if(STATE.band){
-    let bandW = 0;
-    for(let i=STATE.band.from; i<=STATE.band.to && i<STATE.sections.length; i++){
-      bandW += STATE.sections[i].w;
-    }
-    shelf_m2 += (bandW/1000)*(d/1000);
-  }
-  let frontCount, fronts_m2;
-  if(STATE.frontMode==='sliding'){
-    frontCount = Math.min(4, Math.max(2, STATE.sections.length));
-    fronts_m2 = fronts_m2_full;
-  } else {
-    frontCount = STATE.sectionFronts.filter(Boolean).length;
-    const ratio = STATE.sections.length ? frontCount/STATE.sections.length : 0;
-    fronts_m2 = fronts_m2_full * ratio;
-  }
-  // blendy maskujące — boki (szer × wys mebla) + góra (szer mebla × szer blendy)
-  const bl = STATE.blenda || {left:0,right:0,top:0};
-  const blenda_m2 = ((bl.left||0)*STATE.dim.h + (bl.right||0)*STATE.dim.h + (bl.top||0)*STATE.dim.w)/1e6;
-  const corpus_m2 = Math.max(0.1, carcass_m2 + shelf_m2 + blenda_m2 - notchArea_m2);
-  const board_m2 = corpus_m2 + Math.max(0, fronts_m2 - notchArea_m2);
+  const frontCount = STATE.frontMode==='sliding'
+    ? Math.min(4, Math.max(2, STATE.sections.length))
+    : STATE.sectionFronts.filter(Boolean).length;
 
   // 2. Materiał — cena Kronospana × (1 + odpad)
   const matC = MATERIALS.find(m=>m.id===STATE.material) || MATERIALS[0];
@@ -353,10 +324,10 @@ function priceBreakdown(){
   const wasteRule = (PRICING.wasteRules||[{maxSheets:Infinity,rate:0.2}])
     .find(r => sheetsNoWaste <= r.maxSheets);
   const waste = wasteRule ? wasteRule.rate : 0.2;
-  const materialCost = (corpus_m2 * (matC.price||0) + fronts_m2 * (matF.price||0)) * (1 + waste);
+  const materialCost = (corpus_m2 * (matC.price||0) + fronts_m2 * (matF.price||0)) * (1 + waste)
+    + hdf_m2 * (PRICING.hdfPerSqm || 22);
 
   // 3. Cięcie + 4. Obrzeże — z realnej listy formatek
-  const cut = buildCutList();
   const cuttingMb = cut.cutMb;
   const edgingMb  = cut.edgeMb;
   const cuttingCost = cuttingMb * (PRICING.cuttingPerMb || 0);
@@ -378,7 +349,7 @@ function priceBreakdown(){
     // wysokość frontu liczona od korpusu (niezależnie od cokołu/nóżek)
     STATE.sections.forEach((s,si)=>{
       if(!STATE.sectionFronts[si]) return;
-      const frontH = (STATE.dim.h - 40) - (bandSpans(si) ? STATE.band.h : 0);
+      const frontH = (STATE.dim.h - 36) - (bandSpans(si) ? STATE.band.h : 0);
       hardwareCost += hingeCount(frontH) * (hinge.price||0);
     });
   }
@@ -440,7 +411,7 @@ function priceBreakdown(){
 
   return {
     // surowe pola
-    carcass_m2, shelf_m2, corpus_m2, fronts_m2, board_m2,
+    corpus_m2, fronts_m2, hdf_m2, board_m2,
     sheetsNoWaste, waste,
     matC, matF, frontCount,
     // koszty (zaokrąglone)
@@ -731,8 +702,8 @@ function cabinetH(){
 // Szerokość użyteczna wewnątrz korpusu (odświeża się wraz z liczbą sekcji)
 function usableInternalW(){
   const n = STATE.sections.length;
-  // 18 mm × (n+1) = 2 boki + (n-1) przegród wewnętrznych
-  return Math.max(0, cabinetW() - 18 * (n + 1));
+  // każda sekcja = osobna szafka z 2 własnymi bokami → 2 × 18 mm × n
+  return Math.max(0, cabinetW() - 36 * n);
 }
 function balanceSectionWidths(){
   const W = usableInternalW();
@@ -818,7 +789,7 @@ function renderLegPicker(){
     row.innerHTML = '';
   }
 }
-function effectiveInteriorH(){ return cabinetH() - 40 - baseOffset(); }
+function effectiveInteriorH(){ return cabinetH() - 36 - baseOffset(); }   // 36 = wieniec górny + dolny (2×18 mm)
 // ── Skośny sufit ────────────────────────────────────────────
 // Wysokość korpusu w punkcie x (mm od lewej krawędzi korpusu).
 // Skos jest zakotwiczony we WNĘCE (ścianach), nie w korpusie — blenda nie przesuwa
@@ -862,7 +833,7 @@ function sectionCabinetH(si){
   // najniższy punkt: prawa krawędź gdy sufit opada w prawo, lewa gdy w lewo
   return s.side === 'right' ? cabinetHAt(xEnd) : cabinetHAt(x);
 }
-function sectionEffectiveH(si){ return sectionCabinetH(si) - 40 - baseOffset(); }
+function sectionEffectiveH(si){ return sectionCabinetH(si) - 36 - baseOffset(); }  // 36 = 2×18 mm wieńców
 // pozycje "przy podłodze" (pralka) zawsze na końcu listy = najniżej
 // ostrzeżenie: pod siedziskiem musi być półka lub szuflady; nad nim min. 1200 mm
 function seatWarn(s){
@@ -892,7 +863,7 @@ function sortFloorItems(sec){
 // x-zakres sekcji w mm od lewej krawędzi korpusu
 function sectionXRange(si){
   let x = 18;
-  for(let i=0;i<si;i++) x += STATE.sections[i].w + 18;
+  for(let i=0;i<si;i++) x += STATE.sections[i].w + 36;   // 36 = bok prawy + bok lewy sąsiada
   return [x, x + (STATE.sections[si] ? STATE.sections[si].w : 0)];
 }
 function notchAffects(si){
@@ -2041,7 +2012,7 @@ function renderPreview(){
     // profil sufitu liczony z cabinetHAt (skos zakotwiczony we wnęce)
     const xsMm = [0];
     let accX = 18;
-    STATE.sections.forEach(s=>{ xsMm.push(accX); accX += s.w + 18; });
+    STATE.sections.forEach(s=>{ xsMm.push(accX); accX += s.w + 36; });
     xsMm.push(Wmm);
     // punkt złamania skosu w układzie korpusu
     const breakX = sl.side === 'right'
@@ -2070,13 +2041,13 @@ function renderPreview(){
   }
 
   const totalW = STATE.sections.reduce((a,s)=>a+s.w,0)||1;
-  let cx = x0;
+  let cx = x0 + 18*scale;   // pierwsza szafka po lewym boku
   const band = STATE.band;
   const bandPx = band ? band.h*scale : 0;
 
   // sliding doors overlay handled after sections
   STATE.sections.forEach((s,si)=>{
-    const sw = (s.w/totalW)*W;
+    const sw = s.w * scale;
     // przesunięcie sekcji jeśli obejmuje ją pas poziomy
     const spanned = bandSpans(si);
     let secY = y0, secH = H;
@@ -2109,7 +2080,10 @@ function renderPreview(){
       }
     }
     if(si<STATE.sections.length-1){
-      content += `<line x1="${cx+sw}" y1="${secY}" x2="${cx+sw}" y2="${secY+secH}" stroke="${dark}" stroke-width="1"/>`;
+      // podwójna płyta między szafkami (bok prawy + bok lewy sąsiada)
+      const gapPx = Math.max(1.6, 36 * scale);
+      content += `<rect x="${cx+sw}" y="${secY}" width="${gapPx}" height="${secH}" fill="${shade(fill,-0.06)}" stroke="${dark}" stroke-width=".8"/>`;
+      content += `<line x1="${cx+sw+gapPx/2}" y1="${secY}" x2="${cx+sw+gapPx/2}" y2="${secY+secH}" stroke="${dark}" stroke-width=".6" opacity=".8"/>`;
     }
     content += `<text x="${cx+sw/2}" y="${y0+H+16}" font-family="JetBrains Mono" font-size="9" fill="#6a6a62" text-anchor="middle">${Math.round(s.w)}mm</text>`;
     // wolna przestrzeń pod podniesioną sekcją
@@ -2121,17 +2095,17 @@ function renderPreview(){
         content += `<text x="${cx+sw/2}" y="${vy+liftPx/2+3}" font-family="JetBrains Mono" font-size="7.5" fill="#6a6a62" text-anchor="middle">wolne ${s.lift} mm</text>`;
       }
     }
-    cx += sw;
+    cx += sw + 36*scale;
   });
 
   // ── Przelotowa półka (band) — rysowana ponad sekcjami ──
   if(band && STATE.frontMode!=='sliding'){
     // oblicz X-zakres obejmowanych sekcji
-    let bx0 = x0, accW = 0;
-    for(let i=0;i<band.from;i++) accW += (STATE.sections[i].w/totalW)*W;
-    bx0 = x0 + accW;
+    let accW = 0;
+    for(let i=0;i<band.from;i++) accW += (STATE.sections[i].w + 36)*scale;
+    const bx0 = x0 + 18*scale + accW;
     let bw = 0;
-    for(let i=band.from;i<=band.to;i++) bw += (STATE.sections[i].w/totalW)*W;
+    for(let i=band.from;i<=band.to;i++) bw += STATE.sections[i].w*scale + (i<band.to ? 36*scale : 0);
     const by = band.position==='top' ? y0 : y0 + H - bandPx;
     // tło pasa (lekko cieplejsze) + ramka
     content += `<rect x="${bx0}" y="${by}" width="${bw}" height="${bandPx}" fill="${shade(fill,0.03)}" stroke="${dark}" stroke-width="1"/>`;
@@ -2889,6 +2863,137 @@ function initFileUpload(){
 // ────────────────────────────────────────────────────────────
 //  FULL ORDER SPEC — używane do payload e-maila
 // ────────────────────────────────────────────────────────────
+// ── Lista akcesoriów z cenami (do maila) ────────────────────
+function buildAccessoryList(){
+  const rows = [];
+  const push = (name, brand, qty, unit, total) => {
+    rows.push({name, brand: brand||'', qty, unit: unit||0, total: Math.round(total)});
+  };
+  const agg = {};
+  STATE.sections.forEach(s=>{
+    s.items.forEach(it=>{
+      const t = ITEM_TYPES[it.type]; if(!t) return;
+      let nm = t.name, brand = '', price = t.price || 0;
+      if(it.variant && t.variants){
+        const v = t.variants.find(vv=>vv.id===it.variant);
+        if(v){ nm = `${t.name} — ${v.name}`; brand = v.brand||''; price = v.price||0; }
+      } else if(it.type==='szuflady'){
+        const cnt = (it.opts && it.opts.count) || 4;
+        nm = `Zestaw szuflad (${cnt} szt.)`; price = 80*cnt;
+      }
+      if(it.frameColor) nm += ` · ${it.frameColor}`;
+      if(price <= 0) return;
+      const key = nm + '|' + brand + '|' + price;
+      if(!agg[key]) agg[key] = {nm, brand, price, qty:0};
+      agg[key].qty++;
+    });
+  });
+  Object.values(agg).forEach(a=> push(a.nm, a.brand, a.qty, a.price, a.qty * a.price));
+
+  if(STATE.frontMode === 'hinged'){
+    const hinge = HINGES.find(x=>x.id===STATE.hinges) || HINGES[0];
+    let n = 0;
+    STATE.sections.forEach((s,si)=>{
+      if(!STATE.sectionFronts[si]) return;
+      const fh = (STATE.dim.h - 36) - (bandSpans(si) ? STATE.band.h : 0);
+      n += hingeCount(fh);
+    });
+    if(n) push(`Zawiasy — ${hinge.name}`, hinge.brand, n, hinge.price||0, n * (hinge.price||0));
+
+    const handle = HANDLES.find(h=>h.id===STATE.handle) || HANDLES[0];
+    if(handle){
+      let per = handle.price || 0;
+      let nm = handle.name;
+      if(handle.colors){
+        const c = handle.colors.find(c=>c.id===STATE.handleColor) || handle.colors[0];
+        if(c){
+          per += (c.price||0);
+          const cd = (typeof HANDLE_COLORS!=='undefined') && HANDLE_COLORS[c.id];
+          if(cd) nm += ` · ${cd.name.toLowerCase()}`;
+        }
+      }
+      const cnt = STATE.sectionFronts.filter(Boolean).length;
+      if(cnt) push(`Uchwyty — ${nm}`, handle.brand, cnt, per, cnt * per);
+    }
+  }
+
+  if(STATE.frontMode === 'sliding'){
+    const prof = SLIDING_PROFILES.find(p=>p.id===STATE.slidingProfile) || SLIDING_PROFILES[0];
+    const panels = Math.min(4, Math.max(2, STATE.sections.length));
+    const col = (SLIDING_COLORS.find(c=>c.id===STATE.slidingProfileColor)||SLIDING_COLORS[0]);
+    push(`System przesuwny — ${prof.name} · ${col.name.toLowerCase()}`, prof.brand, panels, prof.price||0, panels*(prof.price||0));
+    if(prof.fillable && typeof SLIDING_FILLS !== 'undefined'){
+      const doors_m2 = buildCutList().frontsSqm;
+      if(prof.divisible){
+        const sp = STATE.slidingSplits || {count:2, fills:['plyta','plyta']};
+        const arr = sp.fills.slice(0, sp.count);
+        const per = doors_m2 / Math.max(1, arr.length);
+        const cnt = {};
+        arr.forEach(fid=>{ cnt[fid] = (cnt[fid]||0)+1; });
+        Object.entries(cnt).forEach(([fid,k])=>{
+          const f = SLIDING_FILLS.find(x=>x.id===fid);
+          if(f && f.price) push(`Wypełnienie — ${f.name}`, '', `${(per*k).toFixed(2)} m²`, f.price, per*k*f.price);
+        });
+      } else {
+        const f = SLIDING_FILLS.find(x=>x.id===STATE.slidingFill);
+        if(f && f.price) push(`Wypełnienie — ${f.name}`, '', `${doors_m2.toFixed(2)} m²`, f.price, doors_m2*f.price);
+      }
+    }
+  }
+
+  if(STATE.base === 'nozki' && typeof LEGS !== 'undefined'){
+    const leg = LEGS.find(l=>l.id===STATE.leg);
+    if(leg){
+      const cd = (typeof LEG_COLORS!=='undefined') && LEG_COLORS[STATE.legColor];
+      push(`Nóżki — ${leg.brand} H${leg.h}${cd?` · ${cd.name.toLowerCase()}`:''}`, leg.brand, 4, leg.price||0, 4*(leg.price||0));
+    }
+  } else if(STATE.base === 'cokol'){
+    push('Cokoł 100 mm (montaż)', '', 1, 25, 25);
+  } else if(STATE.base === 'wiszacy'){
+    push('Zawieszenie na stelażu', '', 1, 25, 25);
+  }
+
+  if(STATE.accessories.oswietlenie){
+    const mb = cabinetW()/1000;
+    const per = PRICING.lightingPerM || 0;
+    push('Oświetlenie LED w profilu', 'GTV', `${mb.toFixed(2)} mb`, per, mb*per);
+  }
+
+  const sum = rows.reduce((a,r)=>a+r.total, 0);
+  return { rows, sum };
+}
+
+function accessoryTableHTML(){
+  const { rows, sum } = buildAccessoryList();
+  if(!rows.length) return '';
+  const fmt = n => new Intl.NumberFormat('pl-PL').format(n) + ' zł';
+  const body = rows.map(r=>`
+    <tr>
+      <td style="padding:6px 10px;border:1px solid #d9d3c4">${r.name}${r.brand?` <span style="color:#6a6a62;font-size:11px">· ${r.brand}</span>`:''}</td>
+      <td style="padding:6px 10px;border:1px solid #d9d3c4;text-align:center;font-family:'JetBrains Mono',monospace;white-space:nowrap">${r.qty}</td>
+      <td style="padding:6px 10px;border:1px solid #d9d3c4;text-align:right;font-family:'JetBrains Mono',monospace;white-space:nowrap">${typeof r.unit==='number'?fmt(r.unit):r.unit}</td>
+      <td style="padding:6px 10px;border:1px solid #d9d3c4;text-align:right;font-family:'JetBrains Mono',monospace;white-space:nowrap">${fmt(r.total)}</td>
+    </tr>`).join('');
+  return `
+  <table style="width:100%;border-collapse:collapse;font-family:Inter,sans-serif;font-size:12.5px;margin:6px 0 4px">
+    <thead>
+      <tr style="background:#f5f1e8">
+        <th style="padding:6px 10px;border:1px solid #d9d3c4;text-align:left;font-weight:500">Pozycja</th>
+        <th style="padding:6px 10px;border:1px solid #d9d3c4;text-align:center;font-weight:500">Ilość</th>
+        <th style="padding:6px 10px;border:1px solid #d9d3c4;text-align:right;font-weight:500">Cena jedn.</th>
+        <th style="padding:6px 10px;border:1px solid #d9d3c4;text-align:right;font-weight:500">Wartość</th>
+      </tr>
+    </thead>
+    <tbody>${body}</tbody>
+    <tfoot>
+      <tr style="background:#ede7d6">
+        <td colspan="3" style="padding:7px 10px;border:1px solid #d9d3c4;font-weight:500">Akcesoria razem</td>
+        <td style="padding:7px 10px;border:1px solid #d9d3c4;text-align:right;font-family:'JetBrains Mono',monospace;font-weight:600">${fmt(sum)}</td>
+      </tr>
+    </tfoot>
+  </table>`;
+}
+
 function buildOrderSpec(refNo){
   const pb = priceBreakdown();
   const {w,h,d} = STATE.dim;
@@ -2996,6 +3101,7 @@ function buildOrderSpec(refNo){
       design: pb.designCost,
       back: pb.backCost,
       sections_inserts: pb.accCost,
+      accessories_list: buildAccessoryList().rows,
       hardware: pb.hardwareCost,
       total_gross: pb.total,
       total_net: pb.netto,
@@ -3071,6 +3177,9 @@ function buildSpecHTML(refNo){
 
   <tr><td colspan="2"><h3 style="margin:14px 0 6px;font-family:'Instrument Serif',serif;font-weight:400;font-size:17px;border-bottom:1px solid #d9d3c4;padding-bottom:4px">Układ sekcji</h3></td></tr>
   <tr><td colspan="2" style="padding:8px 0">${sections}</td></tr>
+
+  <tr><td colspan="2"><h3 style="margin:14px 0 6px;font-family:'Instrument Serif',serif;font-weight:400;font-size:17px;border-bottom:1px solid #d9d3c4;padding-bottom:4px">Akcesoria i okucia</h3></td></tr>
+  <tr><td colspan="2">${accessoryTableHTML()}</td></tr>
 
   <tr><td colspan="2"><h3 style="margin:14px 0 6px;font-family:'Instrument Serif',serif;font-weight:400;font-size:17px;border-bottom:1px solid #d9d3c4;padding-bottom:4px">Kosztorys (orientacyjnie)</h3></td></tr>
   ${TR('Materiał', fmtZL(p.material + p.cutting + p.edging + p.labor + (p.back||0)))}

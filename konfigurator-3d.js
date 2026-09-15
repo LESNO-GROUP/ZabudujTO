@@ -141,12 +141,10 @@
       }
     }
 
-    // ── boki (przy skosie każdy innej wysokości) + wieniec górny
+    // ── boki skrajne korpusu + wieniec górny / plecy
     const hL = S.hAt(0), hR = S.hAt(W);
     const slopeOn = Math.abs(hL - hR) > 5;
     const hdfMat = new THREE.MeshStandardMaterial({ color: new THREE.Color(S.corpusColor).multiplyScalar(.82), roughness:.85 });
-    g.add(box(T, hL, D, cx0 + T/2, base + hL/2, 0, corpusMat));
-    g.add(box(T, hR, D, cx0 + W - T/2, base + hR/2, 0, corpusMat));
     if(slopeOn){
       // plecy jako wielokąt pod skosem (shape w XY, extrude w Z)
       const bs = new THREE.Shape();
@@ -163,11 +161,9 @@
       bMesh.receiveShadow = true;
       g.add(bMesh);
     } else {
-      g.add(box(W - 2*T, T, D, 0, base + hL - T/2, 0, corpusMat));
       g.add(box(W, hL, 4, 0, base + hL/2, -D/2 + 2, hdfMat));
     }
-    // wieniec dolny
-    g.add(box(W - 2*T, T, D, 0, base + T/2, 0, corpusMat));
+    // wieniec dolny — per szafka (rysowany w pętli sekcji)
     const hTopAvg = (hL + hR)/2;
 
     // ── sekcje
@@ -180,12 +176,12 @@
       const bandH  = sec.bandCut || 0;
       const bandTop = sec.bandTop;
 
-      // przegroda pionowa po prawej stronie sekcji (poza ostatnią)
-      if(si < S.sections.length - 1){
-        const dh = secTop - 2*T;
-        g.add(box(T, dh, D, x + secW + T/2, base + T + dh/2, 0, corpusMat));
-      }
-      // wieniec górny tej sekcji — podąża za łamaną sufitu
+      // boki tej szafki — każda sekcja ma własne dwie płyty (widoczna podwójna płyta między szafkami)
+      g.add(box(T, secTop, D, x - T/2, base + secTop/2, 0, corpusMat));
+      g.add(box(T, secTop, D, x + secW + T/2, base + secTop/2, 0, corpusMat));
+      // wieniec dolny tej szafki
+      g.add(box(secW, T, D, x + secW/2, base + T/2, 0, corpusMat));
+      // wieniec górny tej szafki — podąża za łamaną sufitu przy skosie
       if(slopeOn){
         const ha = S.hAt(x - cx0), hb = S.hAt(x + secW - cx0);
         const dx = secW * MM, dy = (hb - ha) * MM;
@@ -195,6 +191,8 @@
         tp.position.set((x + secW/2)*MM, (base + (ha + hb)/2 - T/2)*MM, 0);
         tp.castShadow = true; tp.receiveShadow = true;
         g.add(tp);
+      } else {
+        g.add(box(secW, T, D, x + secW/2, base + secTop - T/2, 0, corpusMat));
       }
 
       // dolna granica wnętrza sekcji (z liftem + uskokiem od dołu)
@@ -203,19 +201,23 @@
       // dno podniesionej sekcji
       if(liftMm > 0) g.add(box(secW, T, D, x + secW/2, yBot - T/2, 0, corpusMat));
 
-      // elementy wnętrza — od dołu do góry
-      let acc = 0;
+      // elementy wnętrza — items[0] to GÓRA sekcji (jak w podglądzie 2D),
+      // więc stackujemy od góry w dół
+      let accTop = 0;
       const dInner = D - 20;
       sec.items.forEach(it=>{
         const ih = Number(it.h) || 0;
-        const yFrom = yBot + acc;
-        acc += ih;
-        const yTo = yBot + acc;
+        const yTo = yTop - accTop;        // górna krawędź pola (światło)
+        accTop += ih;
+        // półka zajmuje dodatkowo 18 mm płyty pod światłem — tak jak budżetuje
+        // normalizeShelfHeights() (it.h = światło, płyta liczona osobno)
+        if(it.type === 'polka') accTop += T;
+        const yFrom = yTop - accTop;      // dolna krawędź pola (spód płyty)
         const cxs = x + secW/2;
         if(it.type === 'polka'){
-          g.add(box(secW - 4, T, dInner, cxs, yTo - T/2, 0, corpusMat));
+          g.add(box(secW - 4, T, dInner, cxs, yFrom + T/2, 0, corpusMat));
           if(it.variant === 'przegroda'){
-            g.add(box(T, ih - T, dInner - 20, cxs, yFrom + (ih-T)/2, 0, corpusMat));
+            g.add(box(T, ih - T, dInner - 20, cxs, yFrom + T + (ih-T)/2, 0, corpusMat));
           }
         } else if(it.type === 'drazek'){
           const r = 14;
@@ -233,7 +235,7 @@
         } else if(it.type === 'kosz'){
           g.add(box(secW - 14, ih - 10, dInner - 30, cxs, yFrom + ih/2, 0, metalMat));
         } else if(it.type === 'siedzisko'){
-          g.add(box(secW - 4, 24, dInner, cxs, yTo - 12, 0, corpusMat));
+          g.add(box(secW - 4, 24, dInner, cxs, yFrom + 12, 0, corpusMat));
         } else if(it.type === 'pralka'){
           g.add(box(secW - 30, ih - 20, dInner - 40, cxs, yFrom + ih/2, -20, new THREE.MeshStandardMaterial({ color:0xf2f2ee, roughness:.4, metalness:.1 })));
           const dr = new THREE.Mesh(new THREE.CylinderGeometry((Math.min(secW,ih)*0.28)*MM, (Math.min(secW,ih)*0.28)*MM, 20*MM, 24), darkMat);
@@ -260,7 +262,7 @@
         }
       }
 
-      x += secW + T;
+      x += secW + 2*T;
     });
 
     // drzwi przesuwne
@@ -345,7 +347,7 @@
           m.castShadow = true; m.receiveShadow = true;
           g.add(m);
         }
-        mx += sec.w + T;
+        mx += sec.w + 2*T;
       });
     }
 
