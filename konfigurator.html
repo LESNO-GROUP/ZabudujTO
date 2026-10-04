@@ -134,6 +134,32 @@
   .blenda-title{font-family:var(--ff-serif);font-size:1.05rem}
   .blenda-head{display:flex;align-items:flex-start;justify-content:space-between;gap:1rem}
   .blenda-row[hidden]{display:none !important}
+  .sec-warnings{display:flex;flex-direction:column;gap:.4rem;margin-bottom:.8rem}
+  .sec-warnings[hidden]{display:none !important}
+  .vw{display:flex;gap:.6rem;align-items:flex-start;padding:.6rem .8rem;border-radius:2px;font-size:.8rem;line-height:1.45}
+  .vw--err{background:#f6e3da;color:#7a2e12}
+  .vw--warn{background:#f3ecd9;color:#6b5320}
+  .vw-ico{flex-shrink:0;width:18px;height:18px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-family:var(--ff-mono);font-size:.7rem;font-weight:600;background:currentColor;color:#fff}
+  .vw-ico{color:inherit}
+  .vw--err .vw-ico{background:#a8552f;color:#fff}
+  .vw--warn .vw-ico{background:#b8915a;color:#fff}
+  .mdf-cfg{margin-top:1rem;display:flex;flex-direction:column;gap:.85rem}
+  .mdf-cfg[hidden]{display:none !important}
+  .mdf-row{display:flex;align-items:center;gap:.8rem;flex-wrap:wrap}
+  .mdf-row--top{align-items:flex-start}
+  .mdf-row > label{font-size:.78rem;color:var(--ink-mute);min-width:104px}
+  .mdf-ral{display:flex;align-items:center;gap:.5rem}
+  .mdf-ral-pre{font-size:.72rem;color:var(--ink-mute)}
+  .mdf-ral input{width:74px;padding:.42rem .5rem;border:1px solid var(--line);border-radius:2px;font-family:var(--ff-mono);font-size:.85rem;background:var(--paper)}
+  .mdf-ral-sw{width:30px;height:30px;border-radius:2px;border:1px solid var(--line)}
+  .mdf-ral-name{font-size:.76rem;color:var(--ink-mute)}
+  .mdf-profiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:.4rem;flex:1;min-width:0}
+  .mdf-prof{display:flex;flex-direction:column;align-items:center;gap:.35rem;padding:.55rem .4rem;border:1px solid var(--line);border-radius:2px;background:var(--card);cursor:pointer;font-size:.72rem;color:var(--ink);text-align:center}
+  .mdf-prof:hover{border-color:var(--ink-mute)}
+  .mdf-prof.on{border-color:var(--ink);outline:1px solid var(--ink);outline-offset:-2px}
+  .mdf-prof svg{width:34px;height:46px}
+  .mdf-note{font-size:.76rem;color:var(--ink-mute);line-height:1.5;padding-top:.2rem;border-top:1px solid var(--line)}
+  .mdf-note strong{color:var(--ink);font-weight:600}
   .sketch-open-btn{flex-shrink:0;padding:.55rem 1rem;border:1px solid var(--ink);background:var(--ink);color:var(--paper);border-radius:2px;font-family:var(--ff-mono);font-size:.72rem;letter-spacing:.06em;text-transform:uppercase;cursor:pointer}
   .sketch-open-btn:hover{background:var(--accent);border-color:var(--accent)}
   .sketch-preview{margin-top:.9rem;display:flex;gap:1rem;align-items:center;flex-wrap:wrap}
@@ -627,6 +653,7 @@
     <a href="index.html" class="brand"><img src="assets/logo.png" alt="ZabudujTO"/></a>
     <div class="stepper" id="stepper"></div>
     <div class="top-right">
+      <button class="save-btn" id="linkBtn" title="Skopiuj link do tego projektu">Link do projektu</button>
       <button class="save-btn" id="resetBtn">Zacznij od nowa</button>
     </div>
   </div>
@@ -645,7 +672,7 @@
         </div>
       </div>
       <div class="prev-canvas">
-        <svg id="cabinetSvg" viewBox="-40 -15 680 730" xmlns="http://www.w3.org/2000/svg"></svg>
+        <svg id="cabinetSvg" viewBox="-40 -15 700 745" xmlns="http://www.w3.org/2000/svg"></svg>
         <div id="view3d" class="view3d" hidden>
           <div class="view3d-ctl">
             <button type="button" class="v3d-btn" id="v3dFronts">Pokaż fronty</button>
@@ -700,7 +727,7 @@
           <div class="blenda-head">
             <div>
               <div class="blenda-title">Blendy maskujące</div>
-              <div class="blenda-sub">Listwy zasłaniające szczelinę między meblem a ścianą lub sufitem. Szerokość 20–200 mm. Zostaw 0, jeśli nie potrzebujesz.<br/><strong>Korpus mebla</strong> = wnęka − blendy − luz montażowy (6 mm w poziomie, 5 mm w pionie).</div>
+              <div class="blenda-sub">Listwy zasłaniające szczelinę między meblem a ścianą lub sufitem. Szerokość 0–200 mm (0 = brak blendy). Zostaw 0, jeśli nie potrzebujesz.<br/><strong>Korpus mebla</strong> = wnęka − blendy − luz montażowy (6 mm w poziomie, 5 mm w pionie).</div>
             </div>
           </div>
           <div class="blenda-row">
@@ -936,6 +963,7 @@
           <button class="sb-balance-btn" id="sbBalance" title="Rozłóż sekcje równo">Wyrównaj</button>
         </div>
 
+        <div class="sec-warnings" id="secWarnings" hidden></div>
         <div class="sec-list" id="secList"></div>
         <button class="add-section-btn" id="addSection">+ Dodaj kolejną sekcję</button>
 
@@ -1007,8 +1035,46 @@
           <div class="leg-color-row" id="handleColorRow" style="margin-top:.7rem"></div>
         </div>
 
+        <!-- MATERIAŁ FRONTÓW -->
+        <div class="blenda-block" id="mdfBlock">
+          <div class="blenda-head">
+            <div>
+              <div class="blenda-title">Materiał frontów</div>
+              <div class="blenda-sub">Płyta w dekorze albo MDF 19 mm lakierowany w dowolnym kolorze RAL. Dotyczy frontów uchylnych, szuflad, blend i cokołu — korpus zostaje z płyty.</div>
+            </div>
+            <div class="band-toggle">
+              <button type="button" data-fmat="plyta" id="fmatPlyta">Płyta</button>
+              <button type="button" data-fmat="mdf" id="fmatMdf">MDF lakier</button>
+            </div>
+          </div>
+          <div id="mdfCfg" class="mdf-cfg" hidden>
+            <div class="mdf-row">
+              <label>Wykończenie</label>
+              <div class="band-pos" id="mdfFinish">
+                <button type="button" data-finish="mat">Mat</button>
+                <button type="button" data-finish="polmat">Półmat</button>
+                <button type="button" data-finish="polysk">Połysk</button>
+              </div>
+            </div>
+            <div class="mdf-row">
+              <label>Kolor RAL</label>
+              <div class="mdf-ral">
+                <span class="mdf-ral-pre mono">RAL</span>
+                <input type="text" id="mdfRal" maxlength="4" inputmode="numeric" placeholder="9010"/>
+                <span class="mdf-ral-sw" id="mdfRalSw"></span>
+                <span class="mdf-ral-name" id="mdfRalName"></span>
+              </div>
+            </div>
+            <div class="mdf-row mdf-row--top">
+              <label>Rodzaj frontu</label>
+              <div class="mdf-profiles" id="mdfProfiles"></div>
+            </div>
+            <div class="mdf-note">MDF 19 mm, lakierowanie jednostronne · <strong>450 zł/m²</strong> frontu (MDF + lakier) · realizacja dłuższa o <strong>+1 tydzień</strong>. Drzwi przesuwne zostają z płyty.</div>
+          </div>
+        </div>
+
         <!-- DEKOR -->
-        <div class="f-label" style="margin-top:1.5rem">Dekor płyty</div>
+        <div class="f-label" style="margin-top:1.5rem" id="dekorLabel">Dekor płyty</div>
 
         <div class="split-toggle">
           <button class="split-tab on" data-split="corpus">Korpus + fronty</button>
@@ -1104,7 +1170,11 @@
   <h2>Projekt <em>wysłany.</em></h2>
   <div class="success-ref mono" id="successRef">ZT-2026-00123</div>
   <p>Dziękujemy! W ciągu 48 godzin sprawdzimy Twój projekt i wyślemy finalną wycenę. Jeśli czegoś będziemy potrzebować — zadzwonimy.</p>
-  <a href="index.html" style="padding:.85rem 1.5rem;background:var(--ink);color:var(--paper);border-radius:2px;font-size:.86rem">Wróć na stronę główną</a>
+  <div style="display:flex;gap:.6rem;flex-wrap:wrap;justify-content:center">
+    <button type="button" id="confirmPdfBtn" style="padding:.85rem 1.5rem;background:var(--accent);color:#fff;border:none;border-radius:2px;font-size:.86rem;cursor:pointer">Pobierz potwierdzenie (PDF)</button>
+    <a href="index.html" style="padding:.85rem 1.5rem;background:var(--ink);color:var(--paper);border-radius:2px;font-size:.86rem">Wróć na stronę główną</a>
+  </div>
+  <p style="font-size:.78rem;color:var(--ink-mute);margin-top:.6rem">W oknie drukowania wybierz „Zapisz jako PDF".</p>
 </div>
 
 <!-- SZKICOWNIK WNĘKI — modal -->
@@ -1154,8 +1224,9 @@
 })();
 </script>
 
-<script src="konfigurator-data.js?v=212"></script>
-<script src="konfigurator-3d.js?v=212"></script>
-<script src="konfigurator-app.js?v=212"></script>
+<script src="konfigurator-data.js?v=221"></script>
+<script src="konfigurator-3d.js?v=221"></script>
+<script src="konfigurator-docs.js?v=221"></script>
+<script src="konfigurator-app.js?v=221"></script>
 </body>
 </html>

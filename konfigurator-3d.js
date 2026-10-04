@@ -118,7 +118,7 @@
     const g = new THREE.Group();
 
     const corpusMat = new THREE.MeshStandardMaterial({ color: new THREE.Color(S.corpusColor), roughness:.72, metalness:.02 });
-    const frontMat  = new THREE.MeshStandardMaterial({ color: new THREE.Color(S.frontColor),  roughness:.62, metalness:.03 });
+    const frontMat  = new THREE.MeshStandardMaterial({ color: new THREE.Color(S.frontColor),  roughness:(S.frontRough ?? .62), metalness:.03 });
     const metalMat  = new THREE.MeshStandardMaterial({ color: 0xb9b9b3, roughness:.32, metalness:.85 });
     const darkMat   = new THREE.MeshStandardMaterial({ color: 0x2c2c28, roughness:.55, metalness:.15 });
     const mirrorMat = new THREE.MeshStandardMaterial({ color: 0xcdd5d9, roughness:.08, metalness:.9 });
@@ -194,6 +194,15 @@
       } else {
         g.add(box(secW, T, D, x + secW/2, base + secTop - T/2, 0, corpusMat));
       }
+      // podział na dół + nadstawkę — podwójny wieniec na styku
+      if(sec.parts && sec.parts.length > 1){
+        let cum = 0;
+        for(let p=0;p<sec.parts.length-1;p++){
+          cum += sec.parts[p];
+          g.add(box(secW, T, D, x + secW/2, base + cum - T/2, 0, corpusMat));
+          g.add(box(secW, T, D, x + secW/2, base + cum + T/2, 0, corpusMat));
+        }
+      }
 
       // dolna granica wnętrza sekcji (z liftem + uskokiem od dołu)
       let yBot = base + T + liftMm + (notchH && sec.notchFrom==='bottom' ? notchH : 0);
@@ -262,7 +271,7 @@
         }
       }
 
-      x += secW + 2*T;
+      x += secW + 2*T + 1;   // +1 mm luzu montażowego
     });
 
     // drzwi przesuwne
@@ -287,12 +296,12 @@
       // wysokość sufitu przy krawędzi (mm od podłogi)
       const ceilAt = (xLocal) => base + S.hAt(Math.max(0, Math.min(W, xLocal)));
       if(bl.left > 0){
-        const hh = Math.min(nicheH, ceilAt(0));
+        const hh = (typeof sideBlendaH==='function') ? Math.max(...sideBlendaH('left')) : Math.min(nicheH, ceilAt(0));
         // blenda zachodzi na bok korpusu (T), żeby nie zostawiać szczeliny w płaszczyźnie frontu
         g.add(box(bl.left + T, hh, T, cx0 - bl.left/2 + T/2, hh/2, D/2 + T/2, frontMat));
       }
       if(bl.right > 0){
-        const hh = Math.min(nicheH, ceilAt(W));
+        const hh = (typeof sideBlendaH==='function') ? Math.max(...sideBlendaH('right')) : Math.min(nicheH, ceilAt(W));
         g.add(box(bl.right + T, hh, T, cx0 + W + bl.right/2 - T/2, hh/2, D/2 + T/2, frontMat));
       }
       if(bl.top > 0){
@@ -347,7 +356,7 @@
           m.castShadow = true; m.receiveShadow = true;
           g.add(m);
         }
-        mx += sec.w + 2*T;
+        mx += sec.w + 2*T + 1;
       });
     }
 
@@ -373,10 +382,13 @@
       notchFrom: S.notch ? S.notch.from : 'bottom',
       bandCut: (typeof bandSpans === 'function' && bandSpans(si) && S.band) ? S.band.h : 0,
       bandTop: S.band ? S.band.position === 'top' : false,
+      parts: (typeof sectionParts === 'function') ? sectionParts(si) : null,
     }));
     return {
       dim: S.dim, cabW: W, cabH: H, baseOffset: base, base: S.base,
-      corpusColor: hexOf(mc, '#cdc6b4'), frontColor: hexOf(mf, '#cdc6b4'),
+      corpusColor: hexOf(mc, '#cdc6b4'),
+      frontColor: (typeof mdfOn==='function' && mdfOn()) ? mdfInfo().hex : hexOf(mf, '#cdc6b4'),
+      frontRough: (typeof mdfOn==='function' && mdfOn()) ? ({mat:.78, polmat:.45, polysk:.14}[(S.mdf||{}).finish] ?? .62) : .62,
       sections, secTop, sectionFronts: S.sectionFronts, frontMode: S.frontMode,
       slidingFill: S.slidingFill, blenda: S.blenda,
       showFronts: window.__v3dShowFronts === true,

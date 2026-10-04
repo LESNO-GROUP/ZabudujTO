@@ -32,6 +32,8 @@ function defaultState(){
     sectionFronts:[true,true,true], // for hinged; ignored for sliding
     material:'k013', materialName:'Biel Alpejska', materialCode:'8685',
     splitFront:false,      // osobny dekor frontów
+    frontMat:'plyta',      // 'plyta' | 'mdf' — materiał frontów
+    mdf:{finish:'mat', ral:'9010', profile:'gladki'},
     materialFront:'k013',  // używane gdy splitFront===true
     matEditing:'corpus',   // 'corpus' | 'fronts' — który dekor aktualnie wybieramy
     hinges:'soft',         // 'standard' | 'soft' (cichy domyk)
@@ -43,7 +45,7 @@ function defaultState(){
     previewView:'front',
     matTone:'all',
     band:null,             // {position:'top'|'bottom', h:300, from:0, to:1} — przelotowa półka
-    blenda:{left:0, right:0, top:0},  // blendy maskujące (mm, 0 = brak, zakres 20–200)
+    blenda:{left:0, right:0, top:0},  // blendy maskujące (mm, 0 = brak, zakres 0–200)
     slope:{on:false, side:'right', hLow:1800, flat:0},  // skośny sufit: hLow = wys. przy niższej krawędzi, flat = długość prostego sufitu (0 = brak, skos od razu)
     notch:{on:false, side:'left', from:'bottom', w:300, h:1000, d:150},  // uskok: komin/rura — w/h/d przeszkody
     lead:{name:'',email:'',phone:'',city:'',notes:'',consent:false},
@@ -90,6 +92,8 @@ function loadState(){
         // ── legacy migrations ──────────────────────────────
         if(parsed.handle==='relingowe') parsed.handle='reling-128';
         if(typeof parsed.splitFront==='undefined') parsed.splitFront=false;
+        if(!parsed.frontMat) parsed.frontMat='plyta';
+        if(!parsed.mdf) parsed.mdf={finish:'mat', ral:'9010', profile:'gladki'};
         if(!parsed.materialFront) parsed.materialFront = parsed.material;
         if(!parsed.matEditing) parsed.matEditing='corpus';
         if(!parsed.hinges) parsed.hinges='soft';
@@ -183,6 +187,39 @@ function shade(hex, factor){
 //  Każda formatka płytowa oklejana z 3 stron (przód + dwa boki)
 //  Zwraca: pieces[], pieceCount, cutMb, edgeMb, corpusSqm, frontsSqm
 // ────────────────────────────────────────────────────────────
+// ── Fronty MDF lakierowane ─────────────────────────────────
+const MDF_PRICE = 450;                 // zł/m² frontu (MDF 19 mm + lakier jednostronny)
+const MDF_FINISH = {mat:'Mat', polmat:'Półmat', polysk:'Połysk'};
+const MDF_PROFILES = [
+  {id:'gladki',   name:'Gładki'},
+  {id:'ramka',    name:'Frezowany — ramka'},
+  {id:'wzor',     name:'Frezowany — wzór'},
+  {id:'ryflowany',name:'Ryflowany / lamele'},
+  {id:'uchwyt',   name:'Uchwyt frezowany'},
+];
+// Popularne RAL → kolor podglądu (orientacyjnie)
+const RAL_HEX = {
+  '1013':['#e3d9c6','Biel perłowa'],'1015':['#e6d2b5','Kość słoniowa jasna'],'1019':['#a48f7a','Beż szary'],
+  '3004':['#6b1c23','Purpura'],'5011':['#1a2b3c','Granat stalowy'],'5014':['#606e8c','Niebieski gołębi'],
+  '6005':['#0f4336','Zieleń mchu'],'6021':['#89ac76','Zieleń blada'],'7004':['#9b9b9b','Szary sygnałowy'],
+  '7016':['#383e42','Antracyt'],'7021':['#2f3234','Szary czarny'],'7035':['#cbd0cc','Szary jasny'],
+  '7036':['#9a9697','Szary platynowy'],'7044':['#b8b3a6','Szary jedwabisty'],'8017':['#45322e','Brąz czekoladowy'],
+  '9001':['#e9e0d2','Biel kremowa'],'9002':['#d7d5cb','Biel szara'],'9003':['#ecece7','Biel sygnałowa'],
+  '9005':['#0e0e10','Czerń głęboka'],'9010':['#f1ece1','Biel czysta'],'9016':['#f1f0ea','Biel drogowa'],
+  '9018':['#cfd3cd','Biel papirusowa'],
+};
+function mdfOn(){ return STATE.frontMat === 'mdf' && STATE.frontMode !== 'sliding'; }
+function mdfInfo(){
+  const r = String((STATE.mdf && STATE.mdf.ral) || '').replace(/\D/g,'');
+  const hit = RAL_HEX[r];
+  return { ral:r, hex: hit ? hit[0] : '#e8e4dc', name: hit ? hit[1] : (r.length===4 ? 'kolor wg wzornika RAL' : '') };
+}
+function mdfLabel(){
+  const m = STATE.mdf || {}, i = mdfInfo();
+  const p = MDF_PROFILES.find(x=>x.id===m.profile) || MDF_PROFILES[0];
+  return `MDF 19 mm lakierowany · RAL ${i.ral||'—'} · ${MDF_FINISH[m.finish]||'Mat'} · ${p.name}`;
+}
+
 function buildCutList(){
   const d = STATE.dim.d;
   const w = cabinetW(), h = cabinetH();
@@ -201,15 +238,19 @@ function buildCutList(){
     const notchTag = notchAffects(si) ? ` · głęb. ${dSec}` : '';
     const tag = `S${si+1} (${s.w} mm)`;
 
-    // boki szafki — pełna wysokość korpusu tej sekcji
-    add(`Bok szafki ${tag}${notchTag}`, secH, dSec, 2, 3);
-    // wieniec górny + dolny (w świetle między bokami)
-    add(`Wieniec górny ${tag}${notchTag}`, s.w, dSec, 1, 3);
-    add(`Wieniec dolny ${tag}${notchTag}`, s.w, dSec, 1, 3);
+    // szafka dzielona automatycznie na części ≤ 2000 mm (dół + nadstawka)
+    const parts = sectionParts(si);
+    parts.forEach((ph, pi)=>{
+      const pTag = parts.length > 1
+        ? (pi===0 ? ' · dół' : (pi===parts.length-1 ? ' · nadstawka' : ` · część ${pi+1}`))
+        : '';
+      add(`Bok szafki ${tag}${pTag}${notchTag}`, ph, dSec, 2, 3);
+      add(`Wieniec górny ${tag}${pTag}${notchTag}`, s.w, dSec, 1, 3);
+      add(`Wieniec dolny ${tag}${pTag}${notchTag}`, s.w, dSec, 1, 3);
+      add(`Plecy HDF ${tag}${pTag}`, s.w + 2*T, ph, 1, 0, 'hdf');
+    });
     // dno podniesionej sekcji (lift) — dodatkowa półka nośna
     if(liftMm > 0) add(`Dno nad podłogą ${tag}`, s.w, dSec, 1, 3);
-    // plecy HDF (bez obrzeża)
-    add(`Plecy HDF ${tag}`, s.w + 2*T, secH, 1, 0, 'hdf');
 
     // wyposażenie wnętrza
     const shelves = s.items.filter(it=>it.type==='polka');
@@ -222,37 +263,65 @@ function buildCutList(){
 
   // przelotowa półka — jedna deska przez kilka szafek
   if(STATE.band){
-    let bandW = 0;
+    let cur = 0, k = 0;
+    const flush = ()=>{ if(cur>0){ k++; add(`Półka przelotowa ${k}`, cur, d, 1, 3); } cur = 0; };
     for(let i=STATE.band.from; i<=STATE.band.to && i<STATE.sections.length; i++){
-      bandW += STATE.sections[i].w + 2*T;
+      const sw = STATE.sections[i].w;
+      const next = cur ? cur + SEC_STRIDE + sw : sw;
+      if(next > MAX_PIECE && cur > 0){ flush(); cur = sw; }
+      else cur = next;
     }
-    if(bandW>0) add('Półka przelotowa', bandW - 2*T, d, 1, 3);
+    flush();
+  }
+  // cokół — listwa frontowa, dzielona na odcinki ≤ 2000 mm
+  if(STATE.base === 'cokol'){
+    splitLen(cabinetW(), MAX_TRIM).forEach((L,i,arr)=>{
+      add(`Cokół 100 mm${arr.length>1?` · odcinek ${i+1}`:''}${mdfOn()?' · MDF lakier':''}`, L, 100, 1, mdfOn()?0:3, mdfOn()?'mdf':'corpus');
+    });
   }
 
   // fronty
   if(STATE.frontMode==='sliding'){
     const panels = Math.min(4, Math.max(2, STATE.sections.length));
-    add('Front przesuwny (wkład)', Math.round(w/panels), h, panels, 4, 'front');
+    splitLen(h, MAX_SHEET).forEach((L,i,arr)=>{
+      add(`Front przesuwny (wkład)${arr.length>1?` · pas ${i+1}`:''}`, Math.round(w/panels), L, panels, 4, 'front');
+    });
   } else {
     STATE.sections.forEach((s,si)=>{
       if(!STATE.sectionFronts[si]) return;
       const fh = (sectionCabinetH(si) - 2*T) - (bandSpans(si) ? STATE.band.h : 0) - (s.lift||0);
-      add(`Front uchylny ${`S${si+1}`} (${s.w} mm)`, s.w - 4, fh, 1, 4, 'front');
+      splitLen(fh, MAX_SHEET).forEach((L,i,arr)=>{
+        add(`Front uchylny S${si+1} (${s.w} mm)${arr.length>1?` · część ${i+1}`:''}${mdfOn()?' · MDF lakier':''}`, s.w - 4, L, 1, mdfOn()?0:4, mdfOn()?'mdf':'front');
+      });
     });
   }
 
   // blendy maskujące
   const bl = STATE.blenda || {left:0,right:0,top:0};
-  if(bl.left)  add('Blenda lewa',  bl.left,  STATE.dim.h, 1, 3, 'front');
-  if(bl.right) add('Blenda prawa', bl.right, STATE.dim.h, 1, 3, 'front');
-  if(bl.top)   add('Blenda górna', STATE.dim.w, bl.top, 1, 3, 'front');
+  const addSplit = (name, len, wdt, vertical)=>{
+    splitLen(len, MAX_TRIM).forEach((L,i,arr)=>{
+      const nm = arr.length>1 ? `${name} · odcinek ${i+1}` : name;
+      const k = mdfOn() ? 'mdf' : 'front', e = mdfOn() ? 0 : 3, nmm = mdfOn() ? nm + ' · MDF lakier' : nm;
+      if(vertical) add(nmm, wdt, L, 1, e, k); else add(nmm, L, wdt, 1, e, k);
+    });
+  };
+  if(bl.left){
+    const [a,b] = sideBlendaH('left');
+    addSplit(`Blenda lewa${Math.abs(a-b)>1?' (cięta pod skos)':''}`, Math.max(a,b), bl.left, true);
+  }
+  if(bl.right){
+    const [a,b] = sideBlendaH('right');
+    addSplit(`Blenda prawa${Math.abs(a-b)>1?' (cięta pod skos)':''}`, Math.max(a,b), bl.right, true);
+  }
+  if(bl.top)   addSplit('Blenda górna', STATE.dim.w, bl.top,   false);
 
-  let cutMb = 0, edgeMb = 0, pieceCount = 0, corpusSqm = 0, frontsSqm = 0, hdfSqm = 0;
+  let cutMb = 0, edgeMb = 0, pieceCount = 0, corpusSqm = 0, frontsSqm = 0, hdfSqm = 0, mdfSqm = 0;
   pieces.forEach(p=>{
     pieceCount += p.qty;
     const sqm = p.qty * (p.w/1000) * (p.h/1000);
     if(p.kind === 'front') frontsSqm += sqm;
     else if(p.kind === 'hdf') hdfSqm += sqm;
+    else if(p.kind === 'mdf'){ mdfSqm += sqm; return; }   // MDF: cięcie + lakier w stawce 450 zł/m²
     else corpusSqm += sqm;
     // cięcie ≈ obwód formatki
     cutMb += p.qty * (2*(p.w + p.h))/1000;
@@ -271,6 +340,7 @@ function buildCutList(){
     corpusSqm: Math.round(corpusSqm*1000)/1000,
     frontsSqm: Math.round(frontsSqm*1000)/1000,
     hdfSqm: Math.round(hdfSqm*1000)/1000,
+    mdfSqm: Math.round(mdfSqm*1000)/1000,
   };
 }
 
@@ -320,12 +390,17 @@ function priceBreakdown(){
   const matC = MATERIALS.find(m=>m.id===STATE.material) || MATERIALS[0];
   const matF = STATE.splitFront ? (MATERIALS.find(m=>m.id===STATE.materialFront)||matC) : matC;
   const sheetSqm = PRICING.sheetSqm || 5.796;
-  const sheetsNoWaste = Math.ceil(board_m2 / sheetSqm) || 1;
+  const nest = buildNesting(cut);
+  const sheetsNoWaste = nest.sheets || 1;
   const wasteRule = (PRICING.wasteRules||[{maxSheets:Infinity,rate:0.2}])
     .find(r => sheetsNoWaste <= r.maxSheets);
-  const waste = wasteRule ? wasteRule.rate : 0.2;
-  const materialCost = (corpus_m2 * (matC.price||0) + fronts_m2 * (matF.price||0)) * (1 + waste)
-    + hdf_m2 * (PRICING.hdfPerSqm || 22);
+  const waste = board_m2 > 0 ? Math.max(0, (nest.sheets*sheetSqm - board_m2) / board_m2) : 0;
+  const mdf_m2 = cut.mdfSqm || 0;
+  const mdfCost = mdf_m2 * MDF_PRICE;
+  // płyta liczona pełnymi arkuszami z rozkroju (rozpoczęty arkusz = cały)
+  const materialCost = nest.cost
+    + hdf_m2 * (PRICING.hdfPerSqm || 22)
+    + mdfCost;
 
   // 3. Cięcie + 4. Obrzeże — z realnej listy formatek
   const cuttingMb = cut.cutMb;
@@ -412,10 +487,11 @@ function priceBreakdown(){
   return {
     // surowe pola
     corpus_m2, fronts_m2, hdf_m2, board_m2,
-    sheetsNoWaste, waste,
+    sheetsNoWaste, waste, nest,
     matC, matF, frontCount,
     // koszty (zaokrąglone)
     materialCost: Math.round(materialCost),
+    mdf_m2, mdfCost: Math.round(mdfCost),
     cuttingCost:  Math.round(cuttingCost),
     edgingCost:   Math.round(edgingCost),
     laborCost:    Math.round(laborCost),
@@ -472,7 +548,7 @@ function showStep(n){
     const sum = STATE.sections.reduce((a,s)=>a+s.w,0);
     const usable = usableInternalW();
     if(Math.abs(sum - STATE.dim.w) <= 20 && sum - usable > 20){
-      balanceSectionWidths();
+      fitSectionWidths();
       saveState();
     }
     renderSections();
@@ -537,7 +613,7 @@ function bindDimensions(){
     inp.addEventListener('input',()=>{
       const v = Math.max(Number(inp.min)||0, Number(inp.value)||0);
       STATE.dim[k] = v;
-      if(k==='w') balanceSectionWidths();
+      if(k==='w') fitSectionWidths();
       renderPreview(); updatePrice(); saveState();
       if(STATE.step===3) updateSbInfo();
     });
@@ -555,9 +631,8 @@ function bindDimensions(){
       let v = Number(inp.value)||0;
       if(v < 0) v = 0;
       if(v > 200) v = 200;
-      if(v > 0 && v < 20) v = 20;   // minimum sensownej blendy
       STATE.blenda[key] = v;
-      balanceSectionWidths();
+      fitSectionWidths();
       renderSections(); renderPreview(); updatePrice(); saveState();
     });
     inp.addEventListener('blur',()=>{ inp.value = STATE.blenda[key] || 0; });
@@ -700,10 +775,85 @@ function cabinetH(){
   return Math.max(200, STATE.dim.h - (b.top||0) - 5);
 }
 // Szerokość użyteczna wewnątrz korpusu (odświeża się wraz z liczbą sekcji)
+// Luz montażowy między sąsiednimi szafkami (mm)
+const SEC_GAP = 1;
+// Odstęp między wnętrzami sąsiednich sekcji: bok prawy + luz + bok lewy sąsiada
+const SEC_STRIDE = 36 + SEC_GAP;
 function usableInternalW(){
   const n = STATE.sections.length;
-  // każda sekcja = osobna szafka z 2 własnymi bokami → 2 × 18 mm × n
-  return Math.max(0, cabinetW() - 36 * n);
+  // każda sekcja = osobna szafka z 2 własnymi bokami → 2 × 18 mm × n, plus 1 mm luzu między szafkami
+  return Math.max(0, cabinetW() - 36 * n - SEC_GAP * Math.max(0, n - 1));
+}
+// Dopasuj szerokości do użytecznej szerokości ZACHOWUJĄC proporcje (bez wyrównywania na siłę)
+function fitSectionWidths(){
+  const W = usableInternalW();
+  const n = STATE.sections.length;
+  if(!n) return;
+  const sum = STATE.sections.reduce((a,s)=>a+(s.w||0),0);
+  if(sum <= 0){ balanceSectionWidths(); return; }
+  let acc = 0;
+  STATE.sections.forEach((s,i)=>{
+    if(i < n-1){ s.w = Math.max(150, Math.round(s.w * W / sum)); acc += s.w; }
+  });
+  STATE.sections[n-1].w = Math.max(150, W - acc);
+}
+// Użytkownik zmienił szerokość sekcji si — różnicę przejmują pozostałe sekcje proporcjonalnie
+function setSectionWidth(si, v){
+  const W = usableInternalW();
+  const n = STATE.sections.length;
+  if(n < 2){ STATE.sections[0].w = W; return; }
+  const maxV = W - 150*(n-1);
+  v = Math.max(150, Math.min(Math.round(v)||150, maxV));
+  STATE.sections[si].w = v;
+  const others = STATE.sections.filter((_,i)=>i!==si);
+  const rest = W - v;
+  const osum = others.reduce((a,s)=>a+s.w,0) || 1;
+  let acc = 0;
+  others.forEach((s,k)=>{
+    if(k < others.length-1){ s.w = Math.max(150, Math.round(s.w * rest / osum)); acc += s.w; }
+    else s.w = Math.max(150, rest - acc);
+  });
+}
+// ── Limity formatek ─────────────────────────────────────────
+// Arkusz płyty 2800 × 2070 mm. Formatki korpusu max 2000 mm (fronty do 2780 mm).
+// Wysokość sufitu wnęki (mm od podłogi) w punkcie xn (mm od lewej ściany wnęki)
+function nicheCeilAt(xn){
+  const bl = STATE.blenda || {};
+  const s = STATE.slope;
+  if(!s || !s.on) return STATE.dim.h;
+  // cabinetHAt(x) = sufit − górna blenda − 5 mm luzu; x korpusu = xn − blenda.left − 3
+  return cabinetHAt(xn - (bl.left||0) - 3) + 5 + (bl.top||0);
+}
+// Wysokość blendy bocznej przy krawędziach (pod blendą górną) — dopasowana do skosu
+function sideBlendaH(side){
+  const bl = STATE.blenda || {};
+  const Wn = STATE.dim.w, top = bl.top||0;
+  const a = side==='left' ? 0 : Wn - (bl.right||0);
+  const b = side==='left' ? (bl.left||0) : Wn;
+  return [Math.round(nicheCeilAt(a) - top), Math.round(nicheCeilAt(b) - top)];
+}
+const MAX_PIECE = 2000;
+const MAX_SHEET = 2780;
+// Blendy i cokoły — wyjątek jak fronty, max 2750 mm w jednym kawałku
+const MAX_TRIM = 2750;
+// Podziel długość L na równe kawałki ≤ max
+function splitLen(L, max){
+  L = Math.round(L);
+  if(L <= max) return [L];
+  const n = Math.ceil(L / max);
+  const b = Math.floor(L / n);
+  const arr = Array(n).fill(b);
+  arr[n-1] = L - b*(n-1);
+  return arr;
+}
+// Wysokości części szafki (dół + nadstawka), każda ≤ 2000 mm — dzielone automatycznie
+function sectionParts(si){
+  const H = Math.round(sectionCabinetH(si));
+  if(H <= MAX_PIECE) return [H];
+  const n = Math.ceil(H / MAX_PIECE);
+  const rem = H - MAX_PIECE*(n-1);
+  if(rem >= 300) return [...Array(n-1).fill(MAX_PIECE), rem];
+  return splitLen(H, MAX_PIECE);
 }
 function balanceSectionWidths(){
   const W = usableInternalW();
@@ -863,7 +1013,7 @@ function sortFloorItems(sec){
 // x-zakres sekcji w mm od lewej krawędzi korpusu
 function sectionXRange(si){
   let x = 18;
-  for(let i=0;i<si;i++) x += STATE.sections[i].w + 36;   // 36 = bok prawy + bok lewy sąsiada
+  for(let i=0;i<si;i++) x += STATE.sections[i].w + SEC_STRIDE;   // bok prawy + luz + bok lewy sąsiada
   return [x, x + (STATE.sections[si] ? STATE.sections[si].w : 0)];
 }
 function notchAffects(si){
@@ -877,11 +1027,92 @@ function notchAffects(si){
 }
 // liczba zawiasów na front wg wysokości (mm)
 function hingeCount(hMm){
-  if(hMm <= 900) return 2;
-  if(hMm <= 1600) return 3;
-  if(hMm <= 2000) return 4;
-  if(hMm <= 2400) return 5;
+  if(hMm <= 600) return 2;
+  if(hMm <= 1000) return 3;
+  if(hMm <= 1750) return 4;
+  if(hMm <= 2500) return 5;
   return 6;
+}
+
+// ── ROZKRÓJ na arkusze (tylko do wyceny) ────────────────────
+// Arkusz 2800 × 2070, obcięcie 10 mm z każdej strony, rzaz 4 mm.
+// Dekory drewnopodobne: pilnujemy kierunku słojów (dłuższy bok formatki wzdłuż 2800, bez obracania).
+const SHEET_L = 2800, SHEET_W = 2070, SHEET_TRIM = 10, KERF = 4;
+function nestSheets(pieces, grain){
+  const L = SHEET_L - 2*SHEET_TRIM, Wd = SHEET_W - 2*SHEET_TRIM;
+  // rozwiń ilości; orientacja: dłuższy bok wzdłuż L
+  const items = [];
+  pieces.forEach(p=>{
+    for(let i=0;i<p.qty;i++){
+      let a = Math.max(p.w,p.h), b = Math.min(p.w,p.h);
+      if(!grain && a > L && b <= L && a <= Wd){ const tmp=a; a=b; b=tmp; }
+      items.push({a, b});
+    }
+  });
+  items.sort((x,y)=> y.b - x.b || y.a - x.a);
+  // pasy (shelf packing): każdy pas ma wysokość = najszerszy element, wypełniany wzdłuż L
+  const sheets = [];   // [{strips:[{h, used}] , usedH}]
+  const area = items.reduce((s,i)=>s+i.a*i.b,0);
+  items.forEach(it=>{
+    let placed = false;
+    for(const sh of sheets){
+      for(const st of sh.strips){
+        if(it.b <= st.h && st.used + it.a <= L){ st.used += it.a + KERF; placed = true; break; }
+      }
+      if(placed) break;
+      if(sh.usedH + it.b <= Wd){ sh.strips.push({h:it.b, used:it.a + KERF}); sh.usedH += it.b + KERF; placed = true; break; }
+    }
+    if(!placed) sheets.push({strips:[{h:it.b, used:it.a + KERF}], usedH: it.b + KERF});
+  });
+  const n = sheets.length;
+  return { sheets: n, usage: n ? area / (n * SHEET_L * SHEET_W) : 0 };
+}
+function buildNesting(cut){
+  const matC = MATERIALS.find(m=>m.id===STATE.material) || MATERIALS[0];
+  const matF = STATE.splitFront ? (MATERIALS.find(m=>m.id===STATE.materialFront)||matC) : matC;
+  const groups = {};
+  const put = (mat, p)=>{ (groups[mat.id] = groups[mat.id] || {mat, pieces:[]}).pieces.push(p); };
+  cut.pieces.forEach(p=>{
+    if(p.kind === 'hdf' || p.kind === 'mdf') return;
+    put(p.kind === 'front' ? matF : matC, p);
+  });
+  const sheetSqm = (SHEET_L*SHEET_W)/1e6;
+  const out = Object.values(groups).map(g=>{
+    const r = nestSheets(g.pieces, g.mat.tone === 'wood');
+    return { id:g.mat.id, name:g.mat.name, code:g.mat.code, grain: g.mat.tone==='wood',
+             sheets:r.sheets, usage:r.usage, cost: r.sheets * sheetSqm * (g.mat.price||0) };
+  });
+  return { groups: out, sheets: out.reduce((s,g)=>s+g.sheets,0), cost: out.reduce((s,g)=>s+g.cost,0) };
+}
+
+// ── Sprawdzanie znanych ograniczeń ──────────────────────────
+const LIMITS = { rodMax:1300, shelfWarn:700, frontMaxW:600, drawerMin:300, drawerMax:900 };
+function validateProject(){
+  const out = [];
+  STATE.sections.forEach((s,si)=>{
+    const tag = `Sekcja ${si+1}`;
+    s.items.forEach(it=>{
+      if(it.type==='drazek' && it.variant!=='pantograf' && s.w > LIMITS.rodMax)
+        out.push({lvl:'err', si, msg:`${tag}: drążek ${s.w} mm — maks. ${LIMITS.rodMax} mm. Podziel sekcję albo dodaj podporę.`});
+      if(it.type==='polka' && it.variant!=='przegroda' && s.w > LIMITS.shelfWarn)
+        out.push({lvl:'warn', si, msg:`${tag}: półka ${s.w} mm — powyżej ${LIMITS.shelfWarn} mm może się uginać. Rozważ półkę z przegródką.`});
+      if((it.type==='szuflada' || it.type==='szuflady') && (s.w < LIMITS.drawerMin || s.w > LIMITS.drawerMax))
+        out.push({lvl:'err', si, msg:`${tag}: szuflada ${s.w} mm — dopuszczalnie ${LIMITS.drawerMin}–${LIMITS.drawerMax} mm.`});
+    });
+    if(STATE.frontMode==='hinged' && STATE.sectionFronts[si] && s.w > LIMITS.frontMaxW)
+      out.push({lvl:'warn', si, msg:`${tag}: front uchylny ${s.w} mm — zalecane maks. ${LIMITS.frontMaxW} mm. Rozważ podział na dwie sekcje.`});
+  });
+  // unikalne komunikaty
+  const seen = new Set();
+  return out.filter(o=>{ const k=o.lvl+o.msg; if(seen.has(k)) return false; seen.add(k); return true; });
+}
+function renderWarnings(){
+  const el = document.getElementById('secWarnings');
+  if(!el) return;
+  const list = validateProject();
+  if(!list.length){ el.innerHTML = ''; el.hidden = true; return; }
+  el.hidden = false;
+  el.innerHTML = list.map(o=>`<div class="vw vw--${o.lvl}"><span class="vw-ico">${o.lvl==='err'?'!':'i'}</span><span>${o.msg}</span></div>`).join('');
 }
 // ── Przelotowa półka (band) ─────────────────────────────────
 function bandSpans(si){
@@ -892,6 +1123,7 @@ function sectionInteriorH(si){
   // wysokość użyteczna danej sekcji (skos + pas przelotowy + podniesienie nad podłogą)
   // uskok NIE odejmuje wysokości — zmniejsza głębokość formatek w tym obszarze
   return sectionEffectiveH(si)
+    - 36 * Math.max(0, sectionParts(si).length - 1)
     - (bandSpans(si) ? STATE.band.h : 0)
     - (STATE.sections[si] && STATE.sections[si].lift ? STATE.sections[si].lift : 0);
 }
@@ -914,8 +1146,8 @@ function normalizeShelfHeights(){
   // auto-korekta: sekcje nie mogą wystawać poza użyteczną szerokość korpusu
   const usable = usableInternalW();
   const sumW = STATE.sections.reduce((a,s)=>a+s.w,0);
-  if(usable > 0 && Math.abs(sumW - usable) > 20){
-    balanceSectionWidths();
+  if(usable > 0 && Math.abs(sumW - usable) > 0){
+    fitSectionWidths();
   }
   STATE.sections.forEach(sec=>{
     // pralka zawsze na dole; sekcja z pralką nie może być podniesiona
@@ -994,6 +1226,7 @@ function renderSections(){
   });
   bindSectionEvents();
   renderBand();
+  renderWarnings();
 }
 
 // ── Przelotowa półka — UI ───────────────────────────────────
@@ -1126,11 +1359,12 @@ function renderItemRow(si,ii,it){
 function bindSectionEvents(){
   // section width
   document.querySelectorAll('.sec-width input').forEach(inp=>{
-    inp.addEventListener('input',e=>{
+    inp.addEventListener('change',e=>{
       const si = Number(e.target.dataset.si);
-      STATE.sections[si].w = Math.max(150, Number(e.target.value)||0);
-      updateSbInfo(); renderPreview(); updatePrice(); saveState();
+      setSectionWidth(si, Number(e.target.value)||0);
+      renderSections(); renderPreview(); updatePrice(); saveState();
     });
+    inp.addEventListener('keydown',e=>{ if(e.key==='Enter') e.target.blur(); });
   });
   // delete section
   document.querySelectorAll('.sec-del').forEach(b=>{
@@ -1139,7 +1373,7 @@ function bindSectionEvents(){
       if(STATE.sections.length<=1){ toast('Musisz mieć przynajmniej jedną sekcję'); return; }
       STATE.sections.splice(si,1);
       STATE.sectionFronts.splice(si,1);
-      balanceSectionWidths();
+      fitSectionWidths();
       renderSections(); renderPreview(); updatePrice(); saveState();
     });
   });
@@ -1484,7 +1718,56 @@ function updateSbInfo(){
 // ────────────────────────────────────────────────────────────
 //  STEP 4 — materials + fronts
 // ────────────────────────────────────────────────────────────
+function renderMdfBlock(){
+  const cfg = document.getElementById('mdfCfg');
+  if(!cfg) return;
+  STATE.mdf = STATE.mdf || {finish:'mat', ral:'9010', profile:'gladki'};
+  const isMdf = STATE.frontMat === 'mdf';
+  const blk = document.getElementById('mdfBlock');
+  if(blk) blk.style.opacity = STATE.frontMode==='sliding' ? .55 : 1;
+  document.getElementById('fmatPlyta').classList.toggle('on', !isMdf);
+  document.getElementById('fmatMdf').classList.toggle('on', isMdf);
+  cfg.hidden = !isMdf;
+  document.querySelectorAll('#mdfFinish [data-finish]').forEach(b=>b.classList.toggle('on', b.dataset.finish===STATE.mdf.finish));
+  const ralIn = document.getElementById('mdfRal');
+  if(ralIn && document.activeElement !== ralIn) ralIn.value = STATE.mdf.ral || '';
+  const inf = mdfInfo();
+  const sw = document.getElementById('mdfRalSw'); if(sw) sw.style.background = inf.hex;
+  const nm = document.getElementById('mdfRalName'); if(nm) nm.textContent = inf.name;
+  const icons = {
+    gladki:'<svg viewBox="0 0 34 46" fill="none" stroke="#1a1a17" stroke-width="1.2"><rect x="3" y="3" width="28" height="40"/></svg>',
+    ramka:'<svg viewBox="0 0 34 46" fill="none" stroke="#1a1a17" stroke-width="1.2"><rect x="3" y="3" width="28" height="40"/><rect x="8" y="8" width="18" height="30"/></svg>',
+    wzor:'<svg viewBox="0 0 34 46" fill="none" stroke="#1a1a17" stroke-width="1.2"><rect x="3" y="3" width="28" height="40"/><rect x="8" y="8" width="18" height="13"/><rect x="8" y="25" width="18" height="13"/></svg>',
+    ryflowany:'<svg viewBox="0 0 34 46" fill="none" stroke="#1a1a17" stroke-width="1.2"><rect x="3" y="3" width="28" height="40"/><path d="M9 3v40M15 3v40M21 3v40M27 3v40" stroke-width=".8"/></svg>',
+    uchwyt:'<svg viewBox="0 0 34 46" fill="none" stroke="#1a1a17" stroke-width="1.2"><rect x="3" y="3" width="28" height="40"/><path d="M3 9h28" stroke-width="2.4"/></svg>',
+  };
+  const pr = document.getElementById('mdfProfiles');
+  if(pr){
+    pr.innerHTML = MDF_PROFILES.map(p=>'<button type="button" class="mdf-prof '+(p.id===STATE.mdf.profile?'on':'')+'" data-prof="'+p.id+'">'+(icons[p.id]||'')+'<span>'+p.name+'</span></button>').join('');
+    pr.querySelectorAll('[data-prof]').forEach(b=>b.onclick = ()=>{
+      STATE.mdf.profile = b.dataset.prof; renderMdfBlock(); renderPreview(); updatePrice(); saveState();
+    });
+  }
+  const lbl = document.getElementById('dekorLabel');
+  if(lbl) lbl.textContent = (isMdf && STATE.frontMode!=='sliding') ? 'Dekor płyty — korpus' : 'Dekor płyty';
+  if(!cfg._bound){
+    cfg._bound = true;
+    document.getElementById('fmatPlyta').onclick = ()=>{ STATE.frontMat='plyta'; renderMaterials(); renderPreview(); updatePrice(); saveState(); };
+    document.getElementById('fmatMdf').onclick = ()=>{
+      if(STATE.frontMode==='sliding') toast('MDF lakierowany dotyczy frontów uchylnych, szuflad, blend i cokołu');
+      STATE.frontMat='mdf'; renderMaterials(); renderPreview(); updatePrice(); saveState();
+    };
+    document.querySelectorAll('#mdfFinish [data-finish]').forEach(b=>b.onclick = ()=>{
+      STATE.mdf.finish = b.dataset.finish; renderMdfBlock(); renderPreview(); saveState();
+    });
+    ralIn.addEventListener('input', ()=>{
+      ralIn.value = ralIn.value.replace(/\D/g,'').slice(0,4);
+      STATE.mdf.ral = ralIn.value; renderMdfBlock(); renderPreview(); saveState();
+    });
+  }
+}
 function renderMaterials(){
+  renderMdfBlock();
   const tone = STATE.matTone;
   const filtered = MATERIALS.filter(m=>tone==='all' || m.tone===tone);
   document.getElementById('matCount').textContent = filtered.length;
@@ -1989,7 +2272,7 @@ function renderPreview(){
   const matC = MATERIALS.find(m=>m.id===STATE.material)||MATERIALS[0];
   const matF = STATE.splitFront ? (MATERIALS.find(m=>m.id===STATE.materialFront)||matC) : matC;
   const fill = matC.color || '#cdc6b4';
-  const fillF = matF.color || fill;
+  const fillF = mdfOn() ? mdfInfo().hex : (matF.color || fill);
   const dark = shade(fill,-0.15);
   const darkF = shade(fillF,-0.15);
   // interior detail color — fixed dark so shelves/rods/drawers contrast on light decors
@@ -1999,8 +2282,10 @@ function renderPreview(){
   content += `<rect x="${x0-8}" y="${y0+H}" width="${W+16}" height="3" fill="rgba(0,0,0,0.08)"/>`;
   content += `<line x1="${x0-30}" y1="${y0}" x2="${x0+W+30}" y2="${y0}" stroke="rgba(26,26,23,0.15)" stroke-width="1"/>`;
   content += `<line x1="${x0-30}" y1="${y0+H}" x2="${x0+W+30}" y2="${y0+H}" stroke="rgba(26,26,23,0.25)" stroke-width="1"/>`;
-  content += dimLabel(x0,y0+H+24,x0+W,y0+H+24,`${w} mm`,'h');
-  content += dimLabel(x0-32,y0,x0-32,y0+H,`${h} mm`,'v');
+  content += dimLabel(x0,y0+H+34,x0+W,y0+H+34,`korpus ${w} mm`,'h');
+  content += dimLabel(nx0,y0+H+54,nx0+NW,y0+H+54,`wnęka ${STATE.dim.w} mm`,'h');
+  content += dimLabel(x0-32,y0,x0-32,y0+H,`korpus ${h} mm`,'v');
+  if(Math.abs(nicheH - h) > 1) content += dimLabel(nx0+NW+30,ny0,nx0+NW+30,ny0+NH,`wnęka ${STATE.dim.h} mm`,'v');
   const sl = STATE.slope;
   if(sl && sl.on){
     // korpus jako wielokąt pod skosem (respektuje odcinek skosu)
@@ -2012,7 +2297,7 @@ function renderPreview(){
     // profil sufitu liczony z cabinetHAt (skos zakotwiczony we wnęce)
     const xsMm = [0];
     let accX = 18;
-    STATE.sections.forEach(s=>{ xsMm.push(accX); accX += s.w + 36; });
+    STATE.sections.forEach(s=>{ xsMm.push(accX); accX += s.w + SEC_STRIDE; });
     xsMm.push(Wmm);
     // punkt złamania skosu w układzie korpusu
     const breakX = sl.side === 'right'
@@ -2081,7 +2366,7 @@ function renderPreview(){
     }
     if(si<STATE.sections.length-1){
       // podwójna płyta między szafkami (bok prawy + bok lewy sąsiada)
-      const gapPx = Math.max(1.6, 36 * scale);
+      const gapPx = Math.max(1.6, SEC_STRIDE * scale);
       content += `<rect x="${cx+sw}" y="${secY}" width="${gapPx}" height="${secH}" fill="${shade(fill,-0.06)}" stroke="${dark}" stroke-width=".8"/>`;
       content += `<line x1="${cx+sw+gapPx/2}" y1="${secY}" x2="${cx+sw+gapPx/2}" y2="${secY+secH}" stroke="${dark}" stroke-width=".6" opacity=".8"/>`;
     }
@@ -2095,17 +2380,28 @@ function renderPreview(){
         content += `<text x="${cx+sw/2}" y="${vy+liftPx/2+3}" font-family="JetBrains Mono" font-size="7.5" fill="#6a6a62" text-anchor="middle">wolne ${s.lift} mm</text>`;
       }
     }
-    cx += sw + 36*scale;
+    // podział szafki na dół + nadstawkę (podwójny wieniec)
+    const partsH = sectionParts(si);
+    if(partsH.length > 1){
+      let cum = 0;
+      for(let p=0;p<partsH.length-1;p++){
+        cum += partsH[p];
+        const ys = y0 + H - cum*scale;
+        content += `<rect x="${cx}" y="${ys - 18*scale}" width="${sw}" height="${36*scale}" fill="${shade(fill,-0.06)}" stroke="${dark}" stroke-width=".8"/>`;
+        content += `<line x1="${cx}" y1="${ys}" x2="${cx+sw}" y2="${ys}" stroke="${dark}" stroke-width=".6"/>`;
+      }
+    }
+    cx += sw + SEC_STRIDE*scale;
   });
 
   // ── Przelotowa półka (band) — rysowana ponad sekcjami ──
   if(band && STATE.frontMode!=='sliding'){
     // oblicz X-zakres obejmowanych sekcji
     let accW = 0;
-    for(let i=0;i<band.from;i++) accW += (STATE.sections[i].w + 36)*scale;
+    for(let i=0;i<band.from;i++) accW += (STATE.sections[i].w + SEC_STRIDE)*scale;
     const bx0 = x0 + 18*scale + accW;
     let bw = 0;
-    for(let i=band.from;i<=band.to;i++) bw += STATE.sections[i].w*scale + (i<band.to ? 36*scale : 0);
+    for(let i=band.from;i<=band.to;i++) bw += STATE.sections[i].w*scale + (i<band.to ? SEC_STRIDE*scale : 0);
     const by = band.position==='top' ? y0 : y0 + H - bandPx;
     // tło pasa (lekko cieplejsze) + ramka
     content += `<rect x="${bx0}" y="${by}" width="${bw}" height="${bandPx}" fill="${shade(fill,0.03)}" stroke="${dark}" stroke-width="1"/>`;
@@ -2246,20 +2542,34 @@ function renderPreview(){
   // ── Blendy maskujące ──
   {
     const blFill = shade(fill,-0.08), blEdge = dark;
-    if(bl.left){
-      const bw = bl.left*scale;
-      content += `<rect x="${nx0}" y="${ny0}" width="${bw}" height="${NH}" fill="${blFill}" stroke="${blEdge}" stroke-width=".8"/>`;
-      content += `<text x="${nx0+bw/2}" y="${ny0+NH/2}" font-family="JetBrains Mono" font-size="7.5" fill="#6a6a62" text-anchor="middle" transform="rotate(-90 ${nx0+bw/2} ${ny0+NH/2})">${bl.left}</text>`;
-    }
-    if(bl.right){
-      const bw = bl.right*scale;
-      content += `<rect x="${nx0+NW-bw}" y="${ny0}" width="${bw}" height="${NH}" fill="${blFill}" stroke="${blEdge}" stroke-width=".8"/>`;
-      content += `<text x="${nx0+NW-bw/2}" y="${ny0+NH/2}" font-family="JetBrains Mono" font-size="7.5" fill="#6a6a62" text-anchor="middle" transform="rotate(-90 ${nx0+NW-bw/2} ${ny0+NH/2})">${bl.right}</text>`;
-    }
+    const floorY = ny0 + NH;
+    const yN = (hmm) => floorY - hmm*scale;
+    const xN = (xmm) => nx0 + xmm*scale;
+    const sideBl = (side, bwMm)=>{
+      const [ha, hb] = sideBlendaH(side);
+      const xa = side==='left' ? 0 : STATE.dim.w - bwMm;
+      const xb = side==='left' ? bwMm : STATE.dim.w;
+      content += `<polygon points="${xN(xa)},${floorY} ${xN(xa)},${yN(ha)} ${xN(xb)},${yN(hb)} ${xN(xb)},${floorY}" fill="${blFill}" stroke="${blEdge}" stroke-width=".8"/>`;
+      const cx = (xN(xa)+xN(xb))/2, cy = (floorY + yN(Math.min(ha,hb)))/2;
+      const lbl = Math.abs(ha-hb)>1 ? `${bwMm} · ${Math.max(ha,hb)}` : `${bwMm} · ${ha}`;
+      content += `<text x="${cx}" y="${cy}" font-family="JetBrains Mono" font-size="7.5" fill="#6a6a62" text-anchor="middle" transform="rotate(-90 ${cx} ${cy})">${lbl}</text>`;
+    };
+    if(bl.left)  sideBl('left',  bl.left);
+    if(bl.right) sideBl('right', bl.right);
     if(bl.top){
-      const bh = bl.top*scale;
-      content += `<rect x="${nx0}" y="${ny0}" width="${NW}" height="${bh}" fill="${blFill}" stroke="${blEdge}" stroke-width=".8"/>`;
-      content += `<text x="${nx0+NW/2}" y="${ny0+bh/2+3}" font-family="JetBrains Mono" font-size="7.5" fill="#6a6a62" text-anchor="middle">BLENDA ${bl.top} mm</text>`;
+      // górna blenda podąża za sufitem wnęki (także przy skosie)
+      const Wn = STATE.dim.w, s = STATE.slope;
+      const xs = [0, Wn];
+      if(s && s.on){
+        const flat = Math.max(0, Math.min(s.flat||0, Wn));
+        xs.push(s.side==='right' ? flat : Wn - flat);
+      }
+      const pts = [...new Set(xs)].filter(v=>v>=0&&v<=Wn).sort((a,b)=>a-b);
+      const topEdge = pts.map(x=>`${xN(x)},${yN(nicheCeilAt(x))}`);
+      const botEdge = pts.slice().reverse().map(x=>`${xN(x)},${yN(nicheCeilAt(x) - bl.top)}`);
+      content += `<polygon points="${topEdge.concat(botEdge).join(' ')}" fill="${blFill}" stroke="${blEdge}" stroke-width=".8"/>`;
+      const mid = pts[0] + (pts[pts.length-1]-pts[0])/2;
+      content += `<text x="${xN(mid)}" y="${yN(nicheCeilAt(mid) - bl.top/2)+3}" font-family="JetBrains Mono" font-size="7.5" fill="#6a6a62" text-anchor="middle">BLENDA ${bl.top} mm</text>`;
     }
     // obrys wnęki (kreskowany) gdy są blendy
     if(bl.left||bl.right||bl.top){
@@ -3102,12 +3412,17 @@ function buildOrderSpec(refNo){
       back: pb.backCost,
       sections_inserts: pb.accCost,
       accessories_list: buildAccessoryList().rows,
+      mdf_m2: pb.mdf_m2 ? Number(pb.mdf_m2.toFixed(2)) : 0,
+      mdf_cost: pb.mdfCost || 0,
+      fronts_material: mdfOn() ? mdfLabel() : 'płyta',
       hardware: pb.hardwareCost,
       total_gross: pb.total,
       total_net: pb.netto,
       vat_rate: pb.vat,
       board_m2: Number(pb.board_m2.toFixed(2)),
       waste_pct: Math.round(pb.waste*100),
+      sheets: pb.nest ? pb.nest.groups.map(g=>({decor:`${g.name} ${g.code}`, sheets:g.sheets, usage_pct:Math.round(g.usage*100), grain:g.grain})) : [],
+      warnings: validateProject().map(o=>o.msg),
     },
     production: {
       pieces_count: pb.cut.pieceCount,
@@ -3153,6 +3468,7 @@ function buildSpecHTML(refNo){
 
   <tr><td colspan="2"><h3 style="margin:14px 0 6px;font-family:'Instrument Serif',serif;font-weight:400;font-size:17px;border-bottom:1px solid #d9d3c4;padding-bottom:4px">Klient</h3></td></tr>
   ${TR('Imię i nazwisko', s.customer.name)}
+  ${window.__projLink ? TR('Projekt w konfiguratorze', '<a href="'+window.__projLink+'">Otwórz projekt</a>') : ''}
   ${TR('E-mail', s.customer.email ? `<a href="mailto:${s.customer.email}">${s.customer.email}</a>` : '—')}
   ${TR('Telefon', s.customer.phone ? `<a href="tel:${s.customer.phone.replace(/\s/g,'')}">${s.customer.phone}</a>` : '—')}
   ${TR('Lokalizacja', s.customer.city || '—')}
@@ -3171,7 +3487,7 @@ function buildSpecHTML(refNo){
   ${s.furniture.band && s.furniture.band !== '—' ? TR('Przelotowa półka', s.furniture.band) : ''}
   ${s.furniture.blenda && s.furniture.blenda !== '—' ? TR('Blendy maskujące', s.furniture.blenda) : ''}
   ${TR('Dekor korpusu', corpusName)}
-  ${TR('Dekor frontów', frontsName)}
+  ${(typeof mdfOn==='function' && mdfOn()) ? TR('Fronty', '<strong>'+mdfLabel()+'</strong> — '+(s.pricing.mdf_m2||0).toFixed(2).replace('.',',')+' m² × 450 zł/m²<br><span style="color:#a8552f">Realizacja +1 tydzień</span>') : TR('Dekor frontów', frontsName)}
   ${frBlock}
   ${TR('Oświetlenie LED', s.accessories.lighting_led ? 'TAK' : 'NIE')}
 
@@ -3186,6 +3502,8 @@ function buildSpecHTML(refNo){
   ${p.design ? TR('Projekt', fmtZL(p.design)) : ''}
   ${TR('Akcesoria', fmtZL(p.sections_inserts + p.hardware))}
   ${TR('Zużycie płyty', p.board_m2.toFixed(2).replace('.',',') + ' m²')}
+  ${(p.sheets&&p.sheets.length) ? TR('Arkusze (rozkrój)', p.sheets.map(g=>g.decor+': <strong>'+g.sheets+' ark.</strong> · wykorzystanie '+g.usage_pct+'%'+(g.grain?' · słoje pilnowane':'')).join('<br>')) : ''}
+  ${(p.warnings&&p.warnings.length) ? TR('Uwagi do projektu', '<span style="color:#a8552f">'+p.warnings.join('<br>')+'</span>') : ''}
 
   <tr><td colspan="2"><h3 style="margin:14px 0 6px;font-family:'Instrument Serif',serif;font-weight:400;font-size:17px;border-bottom:1px solid #d9d3c4;padding-bottom:4px">Produkcja</h3></td></tr>
   ${TR('Liczba formatek', s.production.pieces_count + ' szt.')}
@@ -3278,6 +3596,7 @@ async function renderViewToPNG(view, scale){
 async function submitOrder(){
   const ref = 'ZT-2026-' + String(Math.floor(Math.random()*90000)+10000);
   const spec = buildOrderSpec(ref);
+  try{ window.__projLink = location.origin + location.pathname + '#p=' + await encodeProject(); }catch(e){ window.__projLink = ''; }
   const html = buildSpecHTML(ref);
   const fd = new FormData();
   fd.append('ref', ref);
@@ -3286,14 +3605,16 @@ async function submitOrder(){
   fd.append('email', spec.customer.email || '');
   fd.append('phone', spec.customer.phone || '');
   fd.append('name', spec.customer.name || '');
+  try{ const code = await encodeProject(); spec.project_link = location.origin + location.pathname + '#p=' + code; fd.set('payload', JSON.stringify(spec)); }catch(e){}
   fd.append('subject', `Nowe zamówienie ${ref} — ${spec.furniture.type}, ${spec.furniture.dimensions_mm.w}×${spec.furniture.dimensions_mm.h}×${spec.furniture.dimensions_mm.d} mm`);
   (window.__attachments||[]).forEach((f,i)=> fd.append('files', f, f.name));
   // doczep podgląd mebla — widok frontu i widok otwarty
   try {
+    var docImgs = window.__docImgs = {};
     const pngFront = await renderViewToPNG('front');
-    if(pngFront) fd.append('files', pngFront, `${ref}-preview-front.png`);
+    if(pngFront){ fd.append('files', pngFront, `${ref}-preview-front.png`); docImgs.front = pngFront; }
     const pngOpen = await renderViewToPNG('open');
-    if(pngOpen) fd.append('files', pngOpen, `${ref}-preview-open.png`);
+    if(pngOpen){ fd.append('files', pngOpen, `${ref}-preview-open.png`); docImgs.open = pngOpen; }
     // render 3D
     if(window.ZT3D){
       const prevView = STATE.previewView;
@@ -3306,13 +3627,13 @@ async function submitOrder(){
       window.ZT3D.update();
       await new Promise(r=>setTimeout(r, 350));
       const pngIsoFront = await window.ZT3D.toIsoPNG();
-      if(pngIsoFront) fd.append('files', pngIsoFront, `${ref}-3d-front-izo.png`);
+      if(pngIsoFront){ fd.append('files', pngIsoFront, `${ref}-3d-front-izo.png`); docImgs.iso = pngIsoFront; }
       // 2) izometryk bez frontów — układ wnętrza
       window.__v3dShowFronts = false;
       window.ZT3D.update();
       await new Promise(r=>setTimeout(r, 350));
       const pngIsoOpen = await window.ZT3D.toIsoPNG();
-      if(pngIsoOpen) fd.append('files', pngIsoOpen, `${ref}-3d-wnetrze-izo.png`);
+      if(pngIsoOpen){ fd.append('files', pngIsoOpen, `${ref}-3d-wnetrze-izo.png`); docImgs.isoOpen = pngIsoOpen; }
       // 3) perspektywa
       const png3d = await window.ZT3D.toPNG();
       if(png3d) fd.append('files', png3d, `${ref}-3d-perspektywa.png`);
@@ -3330,6 +3651,18 @@ async function submitOrder(){
   } catch(e) {
     console.warn('Preview render failed (ignoring):', e);
   }
+
+  // dokumenty: instrukcja montażu (dla Ciebie — wysyłasz z zamówieniem) + potwierdzenie dla klienta
+  try{
+    const toURL = b => new Promise(r=>{ const fr = new FileReader(); fr.onload = ()=>r(fr.result); fr.onerror = ()=>r(null); fr.readAsDataURL(b); });
+    const src = window.__docImgs || {}, imgs = {};
+    for(const k of Object.keys(src)) imgs[k] = await toURL(src[k]);
+    if(window.ZTDocs){
+      const instr = window.ZTDocs.buildInstructionHTML(ref, imgs);
+      fd.append('files', new Blob([instr], {type:'text/html'}), `${ref}-instrukcja-montazu.html`);
+      window.__confirmHTML = window.ZTDocs.buildConfirmationHTML(ref, imgs);
+    }
+  }catch(e){ console.warn('Docs build failed (ignoring):', e); }
 
   const btn = document.getElementById('btnNext');
   const lbl = document.getElementById('btnNextLabel');
@@ -3439,7 +3772,10 @@ function renderSummary(){
       : `<span style="background:${m.color||'#cdc6b4'};width:100%;height:100%;display:block"></span>`;
     return `<span class="ss-mat-chip"><span class="ss-mat-sw">${sw}</span><span class="ss-mat-txt"><span class="ss-mat-name">${m.name}</span><span class="ss-mat-code mono">${m.code}</span></span></span>`;
   };
-  const materialBlock = STATE.splitFront
+  const mdfRow = mdfOn() ? '<div class="ss-kv"><span class="ss-k">Fronty</span><span class="ss-v"><span class="ss-hw-dot" style="background:'+mdfInfo().hex+'"></span>'+mdfLabel()+' <span class="ss-sub">· +1 tydzień realizacji</span></span></div>' : '';
+  const materialBlock = mdfOn()
+    ? '<div class="ss-kv"><span class="ss-k">Korpus</span><span class="ss-v">'+matChip(matC)+'</span></div>'+mdfRow
+    : STATE.splitFront
     ? `<div class="ss-kv"><span class="ss-k">Korpus</span><span class="ss-v">${matChip(matC)}</span></div>
        <div class="ss-kv"><span class="ss-k">Fronty</span><span class="ss-v">${matChip(matF)}</span></div>`
     : `<div class="ss-kv"><span class="ss-k">Dekor</span><span class="ss-v">${matChip(matC)}</span></div>`;
@@ -3663,4 +3999,61 @@ function syncBaseVisibility(){
   if(!isBath && STATE.base==='wiszacy'){ STATE.base='podloga'; }
   document.querySelectorAll('.base-card').forEach(x=>x.classList.toggle('sel', x.dataset.base===STATE.base));
 }
-document.addEventListener('DOMContentLoaded', init);
+// ── Link do projektu — stan zapisany w samym adresie (#p=…) ──
+async function b64urlFromBytes(bytes){
+  let s = ''; const ch = 0x8000;
+  for(let i=0;i<bytes.length;i+=ch) s += String.fromCharCode.apply(null, bytes.subarray(i,i+ch));
+  return btoa(s).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+}
+function bytesFromB64url(str){
+  const b = atob(str.replace(/-/g,'+').replace(/_/g,'/'));
+  const out = new Uint8Array(b.length);
+  for(let i=0;i<b.length;i++) out[i] = b.charCodeAt(i);
+  return out;
+}
+async function encodeProject(){
+  const snap = JSON.parse(JSON.stringify(STATE));
+  snap.lead = {name:'',email:'',phone:'',city:'',notes:'',consent:false};   // bez danych osobowych
+  const json = new TextEncoder().encode(JSON.stringify(snap));
+  if(window.CompressionStream){
+    const cs = new Blob([json]).stream().pipeThrough(new CompressionStream('deflate-raw'));
+    const buf = new Uint8Array(await new Response(cs).arrayBuffer());
+    return 'z' + await b64urlFromBytes(buf);
+  }
+  return 'j' + await b64urlFromBytes(json);
+}
+async function decodeProject(code){
+  const kind = code[0], bytes = bytesFromB64url(code.slice(1));
+  let json;
+  if(kind === 'z'){
+    const ds = new Blob([bytes]).stream().pipeThrough(new DecompressionStream('deflate-raw'));
+    json = await new Response(ds).text();
+  } else json = new TextDecoder().decode(bytes);
+  return JSON.parse(json);
+}
+async function copyProjectLink(){
+  try{
+    const code = await encodeProject();
+    const url = location.origin + location.pathname + '#p=' + code;
+    try{ await navigator.clipboard.writeText(url); toast('Link do projektu skopiowany — otworzysz go na dowolnym urządzeniu'); }
+    catch(e){ window.prompt('Skopiuj link do projektu:', url); }
+    return url;
+  }catch(e){ console.error(e); toast('Nie udało się utworzyć linku'); return null; }
+}
+async function bootstrap(){
+  const m = location.hash.match(/^#p=([A-Za-z0-9_-]+)/);
+  if(m){
+    try{
+      const st = await decodeProject(m[1]);
+      if(st && st.dim){ localStorage.setItem(STORAGE_KEY, JSON.stringify(st)); }
+    }catch(e){ console.error('Link projektu uszkodzony', e); }
+    history.replaceState(null, '', location.pathname + location.search);
+    setTimeout(()=>toast('Wczytano projekt z linku'), 600);
+  }
+  init();
+  const lb = document.getElementById('linkBtn');
+  if(lb) lb.addEventListener('click', copyProjectLink);
+  const cp = document.getElementById('confirmPdfBtn');
+  if(cp) cp.addEventListener('click', ()=>{ if(window.__confirmHTML && window.ZTDocs) window.ZTDocs.printDoc(window.__confirmHTML); });
+}
+document.addEventListener('DOMContentLoaded', bootstrap);
