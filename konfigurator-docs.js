@@ -87,8 +87,8 @@
       <h2>Układ sekcji</h2>
       <table><thead><tr><th>Sekcja</th><th>Szer.</th><th>Front</th><th>Wyposażenie</th></tr></thead><tbody>${secs}</tbody></table>
       ${acc ? `<h2>Akcesoria i okucia</h2><table><thead><tr><th>Pozycja</th><th style="text-align:right">Ilość</th></tr></thead><tbody>${acc}</tbody></table>` : ''}
-      <div class="total"><span>Cena orientacyjna brutto</span><span class="v">${zl(p.total_gross)}</span></div>
-      <p class="note">Cena orientacyjna z konfiguratora (netto ${zl(p.total_net)}, VAT ${Math.round((p.vat_rate||0.23)*100)}%). Wiążąca cena zostanie potwierdzona po weryfikacji projektu. Transport wyceniany osobno.</p>
+      <div class="total"><span>Cena orientacyjna</span><span class="v">${zl(p.total_gross)}</span></div>
+      <p class="note">Cena orientacyjna z konfiguratora. Wiążąca cena zostanie potwierdzona po weryfikacji projektu. Transport wyceniany osobno.</p>
       <h2>Kontakt</h2>
       <p>Pytania do zgłoszenia <span class="mono">${esc(ref)}</span>: <strong>${COMPANY.mail}</strong> · ${COMPANY.web}</p>
       ${footer(ref)}

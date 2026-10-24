@@ -64,9 +64,8 @@ function defaultItems(type,kind){
     {type:'polka', h:250},
   ];
   if(kind==='drazek') return [
-    {type:'otwarta', h:300},
-    {type:'drazek', h:60, variant:'prosty-owal'},
-    {type:'otwarta', h:1340},
+    {type:'polka', h:300},
+    {type:'drazek', h:1100, variant:'prosty-owal'},
     {type:'polka', h:300},
     {type:'polka', h:300},
     {type:'polka', h:300},
@@ -115,6 +114,17 @@ function loadState(){
         if(!parsed.slope) parsed.slope = {on:false, side:'right', hLow:1800, flat:0};
         if(typeof parsed.slope.flat === 'undefined') parsed.slope.flat = parsed.slope.span ? Math.max(0, (parsed.dim?parsed.dim.w:2000) - parsed.slope.span) : 0;
         delete parsed.slope.span;
+        // drążek = cała strefa wieszania (dawniej osobny element 60 mm + "przestrzeń otwarta")
+        (parsed.sections||[]).forEach(sec=>{
+          const its = sec.items||[];
+          for(let i=0;i<its.length;i++){
+            const it = its[i];
+            if(it.type!=='drazek' || (Number(it.h)||0) >= 300) continue;
+            if(its[i+1] && its[i+1].type==='otwarta'){ it.h = (Number(it.h)||0) + (Number(its[i+1].h)||0); its.splice(i+1,1); }
+            else it.h = 1000;
+            if(its[i-1] && its[i-1].type==='otwarta') its[i-1] = {type:'polka', h:its[i-1].h};
+          }
+        });
         if(!parsed.notch) parsed.notch = {on:false, side:'left', from:'bottom', w:300, h:1000, d:150};
         if(typeof parsed.notch.d === 'undefined') parsed.notch.d = 150;
         if(!parsed.leg) parsed.leg='gtv-dak27';
@@ -254,7 +264,9 @@ function buildCutList(){
 
     // wyposażenie wnętrza
     const shelves = s.items.filter(it=>it.type==='polka');
-    if(shelves.length) add(`Półka ${tag}${notchTag}`, s.w, dSec, shelves.length, 3);
+    const repl = sectionSplitPlan(si).joints.filter(j=>j.replaces).length;
+    const boards = sectionBoardCount(s) - repl;
+    if(boards > 0) add(`Półka ${tag}${notchTag}`, s.w, dSec, boards, 3);
     const withDiv = shelves.filter(it=>it.variant==='przegroda').length;
     if(withDiv) add(`Przegroda w półce ${tag}`, 250, dSec, withDiv, 3);
     const seats = s.items.filter(it=>it.type==='siedzisko');
@@ -289,9 +301,11 @@ function buildCutList(){
   } else {
     STATE.sections.forEach((s,si)=>{
       if(!STATE.sectionFronts[si]) return;
-      const fh = (sectionCabinetH(si) - 2*T) - (bandSpans(si) ? STATE.band.h : 0) - (s.lift||0);
-      splitLen(fh, MAX_SHEET).forEach((L,i,arr)=>{
-        add(`Front uchylny S${si+1} (${s.w} mm)${arr.length>1?` · część ${i+1}`:''}${mdfOn()?' · MDF lakier':''}`, s.w - 4, L, 1, mdfOn()?0:4, mdfOn()?'mdf':'front');
+      const leaves = frontLeaves(si);
+      leaves.forEach((lf,li)=>{
+        splitLen(lf.h, MAX_SHEET).forEach((L,i,arr)=>{
+          add(`Front uchylny S${si+1} (${s.w} mm)${leaves.length>1?` · ${li+1}/${leaves.length}`:''}${arr.length>1?` · część ${i+1}`:''}${mdfOn()?' · MDF lakier':''}`, s.w - 4, L, 1, mdfOn()?0:4, mdfOn()?'mdf':'front');
+        });
       });
     });
   }
@@ -345,7 +359,7 @@ function buildCutList(){
 }
 
 // ────────────────────────────────────────────────────────────
-//  PRICING — silnik kosztorysu (brutto)
+//  PRICING — silnik kosztorysu (cena końcowa)
 //  Składowe:
 //   1. Materiał (płyta) — cena Kronospan / m² × (1 + odpad)
 //   2. Cięcie — m² płyty × cuttingPerSqm × cuttingPerMb
@@ -384,7 +398,7 @@ function priceBreakdown(){
   });
   const frontCount = STATE.frontMode==='sliding'
     ? Math.min(4, Math.max(2, STATE.sections.length))
-    : STATE.sectionFronts.filter(Boolean).length;
+    : STATE.sections.reduce((a,_,si)=>a + frontLeaves(si).length, 0);
 
   // 2. Materiał — cena Kronospana × (1 + odpad)
   const matC = MATERIALS.find(m=>m.id===STATE.material) || MATERIALS[0];
@@ -423,9 +437,7 @@ function priceBreakdown(){
     // liczba zawiasów zależna od wysokości frontu (per sekcja z frontem)
     // wysokość frontu liczona od korpusu (niezależnie od cokołu/nóżek)
     STATE.sections.forEach((s,si)=>{
-      if(!STATE.sectionFronts[si]) return;
-      const frontH = (STATE.dim.h - 36) - (bandSpans(si) ? STATE.band.h : 0);
-      hardwareCost += hingeCount(frontH) * (hinge.price||0);
+      frontLeaves(si).forEach(lf=>{ hardwareCost += hingeCount(lf.h) * (hinge.price||0); });
     });
   }
   if(STATE.frontMode==='sliding'){
@@ -480,9 +492,10 @@ function priceBreakdown(){
   }
 
   const subtotal = materialCost + cuttingCost + edgingCost + laborCost + designCost + backCost + accCost + hardwareCost;
-  const total = Math.max(PRICING.minOrder || 0, Math.round(subtotal));
-  const vat = PRICING.vat || 0.23;
-  const netto = Math.round(total / (1+vat));
+  // cena końcowa = kwota netto (subtotal / 1,23)
+  const vat = 0;
+  const netto = Math.max(PRICING.minOrder || 0, Math.round(subtotal / 1.23));
+  const total = netto;
 
   return {
     // surowe pola
@@ -846,14 +859,54 @@ function splitLen(L, max){
   arr[n-1] = L - b*(n-1);
   return arr;
 }
-// Wysokości części szafki (dół + nadstawka), każda ≤ 2000 mm — dzielone automatycznie
-function sectionParts(si){
+// Podział szafki na dół + nadstawkę.
+// Limit boku: 2000 mm, a przy cokole — wymiar arkusza (2780 mm).
+// Styk (podwójny wieniec) ustawiany na granicy elementów — najlepiej w miejscu półki,
+// która wtedy znika (zastępuje ją wieniec), więc podział nie tnie szuflad ani strefy wieszania.
+function sectionSplitPlan(si){
+  const s = STATE.sections[si];
   const H = Math.round(sectionCabinetH(si));
-  if(H <= MAX_PIECE) return [H];
-  const n = Math.ceil(H / MAX_PIECE);
-  const rem = H - MAX_PIECE*(n-1);
-  if(rem >= 300) return [...Array(n-1).fill(MAX_PIECE), rem];
-  return splitLen(H, MAX_PIECE);
+  const maxH = STATE.base === 'cokol' ? MAX_SHEET : MAX_PIECE;
+  if(!s || H <= maxH) return {parts:[H], joints:[]};
+  let y = 18 + ((STATE.band && bandSpans(si) && STATE.band.position==='top') ? STATE.band.h : 0);
+  const cands = [];
+  s.items.forEach((it,i)=>{
+    const rs = rodShelves(s, i);
+    if(rs.above) y += 18;
+    y += Number(it.h)||0;
+    const top = y + 18;               // nadstawka: od góry do styku (z jej wieńcem dolnym)
+    const hasBelow = it.type==='polka' || !!rs.below;
+    if(i < s.items.length - 1) cands.push({afterIdx:i, replaces: hasBelow, top, bottom: H - top});
+    if(hasBelow) y += 18;
+  });
+  const ok = c => c.top >= 300 && c.bottom >= 300 && c.top <= maxH && c.bottom <= maxH;
+  const pick = arr => arr.filter(ok).sort((a,b)=> b.bottom - a.bottom)[0];
+  const best = pick(cands.filter(c=>c.replaces)) || pick(cands);
+  if(best) return {parts:[best.bottom, best.top], joints:[{afterIdx:best.afterIdx, replaces:best.replaces}]};
+  // awaryjnie — stały podział
+  const n = Math.ceil(H / maxH);
+  const rem = H - maxH*(n-1);
+  const parts = rem >= 300 ? [...Array(n-1).fill(maxH), rem] : splitLen(H, maxH);
+  return {parts, joints: parts.slice(0,-1).map(()=>({afterIdx:-1, replaces:false}))};
+}
+function sectionParts(si){ return sectionSplitPlan(si).parts; }
+// ile mm wnętrza zabiera styk (36 mm, albo 18 mm gdy zastępuje półkę)
+function sectionJointLoss(si){
+  return sectionSplitPlan(si).joints.reduce((a,j)=> a + (j.replaces ? 18 : 36), 0);
+}
+// Układ elementów w pionie (px) z miejscem na styk — wspólny dla wnętrza i nakładki
+function interiorLayout(s, si, Hpx){
+  const plan = si >= 0 ? sectionSplitPlan(si) : {joints:[]};
+  const jAt = new Map(plan.joints.filter(j=>j.afterIdx>=0).map(j=>[j.afterIdx, j]));
+  const totalMm = (s.items.reduce((a,it)=>a+(Number(it.h)||0),0) + 36*jAt.size) || 1;
+  const k = Hpx / totalMm;
+  let acc = 0; const joints = [];
+  s.items.forEach((it,i)=>{
+    acc += (Number(it.h)||0) * k;
+    const j = jAt.get(i);
+    if(j){ joints.push({afterIdx:i, y:acc, h:36*k, replaces:j.replaces}); acc += 36*k; }
+  });
+  return {k, joints, plan};
 }
 function balanceSectionWidths(){
   const W = usableInternalW();
@@ -864,7 +917,73 @@ function balanceSectionWidths(){
 }
 function sectionItemsSum(s){ return s.items.reduce((a,it)=>a+(Number(it.h)||0),0); }
 function sectionShelfCount(s){ return s.items.filter(it=>it.type==='polka').length; }
-function sectionPhysicalSum(s){ return sectionItemsSum(s) + sectionShelfCount(s)*18; }
+// Drążek: półka nad strefą (o ile nie ma jej element powyżej) i półka pod strefą —
+// chyba że drążek jest pierwszy od góry (wieniec górny) lub ostatni od dołu (wieniec dolny).
+function rodShelves(s, idx){
+  const its = s.items, n = its.length, it = its[idx];
+  if(!it || it.type!=='drazek') return {above:0, below:0};
+  const prev = its[idx-1];
+  const prevHasBelow = prev && (prev.type==='polka' || prev.type==='drazek');
+  return { above: (idx>0 && !prevHasBelow) ? 1 : 0, below: idx < n-1 ? 1 : 0 };
+}
+function itemBoards(s, idx){
+  const it = s.items[idx];
+  if(!it) return 0;
+  if(it.type==='polka') return 1;
+  if(it.type==='drazek'){ const r = rodShelves(s, idx); return r.above + r.below; }
+  return 0;
+}
+function sectionBoardCount(s){ let c = 0; for(let i=0;i<s.items.length;i++) c += itemBoards(s,i); return c; }
+function sectionPhysicalSum(s){ return sectionItemsSum(s) + sectionBoardCount(s)*18; }
+
+// ── Fronty na część sekcji ──────────────────────────────────
+// s.frontCuts = [idx…]  — podział frontu na półce pod elementem idx
+// s.frontOpen = [zone…] — strefy bez frontu (otwarte)
+function frontCutCandidates(s){
+  const out = [];
+  s.items.forEach((it,i)=>{
+    if(i >= s.items.length-1) return;
+    const below = it.type==='polka' || (it.type==='drazek' && rodShelves(s,i).below);
+    if(below) out.push(i);
+  });
+  return out;
+}
+function frontZones(si){
+  const s = STATE.sections[si]; if(!s) return [];
+  const cand = new Set(frontCutCandidates(s));
+  const cuts = (s.frontCuts||[]).filter(i=>cand.has(i)).sort((a,b)=>a-b);
+  // położenia fizyczne (mm od góry wnętrza)
+  const pos = []; let y = 0;
+  s.items.forEach((it,i)=>{
+    const rs = rodShelves(s,i);
+    if(rs.above) y += 18;
+    const y0 = y; y += Number(it.h)||0;
+    const hasBelow = it.type==='polka' || !!rs.below;
+    pos.push({y0, y1:y, mid: hasBelow ? y + 9 : y});
+    if(hasBelow) y += 18;
+  });
+  const total = y || 1;
+  const open = new Set(s.frontOpen||[]);
+  const zones = []; let start = 0, f0 = 0;
+  [...cuts, s.items.length-1].forEach((endIdx, zi)=>{
+    const last = zi === cuts.length;
+    const f1 = last ? 1 : pos[endIdx].mid / total;
+    zones.push({zi, from:start, to:endIdx, f0, f1, open: open.has(zi)});
+    start = endIdx + 1; f0 = f1;
+  });
+  return zones;
+}
+// skrzydła frontu (tylko strefy z frontem): f0/f1 = ułamek od góry, h = wysokość mm
+function frontLeaves(si){
+  if(STATE.frontMode!=='hinged' || !STATE.sectionFronts[si]) return [];
+  const s = STATE.sections[si];
+  const fh = (sectionCabinetH(si) - 36) - (bandSpans(si) ? STATE.band.h : 0) - (s.lift||0);
+  const zones = frontZones(si);
+  return zones.filter(z=>!z.open).map(z=>({
+    f0:z.f0, f1:z.f1, zi:z.zi,
+    h: Math.max(50, Math.round((z.f1 - z.f0) * fh) - (zones.length>1 ? 3 : 0))
+  }));
+}
 function baseOffset(){
   if(STATE.base==='cokol') return 100;
   if(STATE.base==='nozki'){
@@ -1094,6 +1213,8 @@ function validateProject(){
     s.items.forEach(it=>{
       if(it.type==='drazek' && it.variant!=='pantograf' && s.w > LIMITS.rodMax)
         out.push({lvl:'err', si, msg:`${tag}: drążek ${s.w} mm — maks. ${LIMITS.rodMax} mm. Podziel sekcję albo dodaj podporę.`});
+      if(it.type==='drazek' && (Number(it.h)||0) < 800)
+        out.push({lvl:'warn', si, msg:`${tag}: strefa wieszania ${it.h} mm — za mało na ubrania (krótkie ok. 900 mm, długie ok. 1500 mm).`});
       if(it.type==='polka' && it.variant!=='przegroda' && s.w > LIMITS.shelfWarn)
         out.push({lvl:'warn', si, msg:`${tag}: półka ${s.w} mm — powyżej ${LIMITS.shelfWarn} mm może się uginać. Rozważ półkę z przegródką.`});
       if((it.type==='szuflada' || it.type==='szuflady') && (s.w < LIMITS.drawerMin || s.w > LIMITS.drawerMax))
@@ -1123,7 +1244,7 @@ function sectionInteriorH(si){
   // wysokość użyteczna danej sekcji (skos + pas przelotowy + podniesienie nad podłogą)
   // uskok NIE odejmuje wysokości — zmniejsza głębokość formatek w tym obszarze
   return sectionEffectiveH(si)
-    - 36 * Math.max(0, sectionParts(si).length - 1)
+    - sectionJointLoss(si)
     - (bandSpans(si) ? STATE.band.h : 0)
     - (STATE.sections[si] && STATE.sections[si].lift ? STATE.sections[si].lift : 0);
 }
@@ -1167,7 +1288,7 @@ function normalizeShelfHeights(){
       if(it.type==='polka' && !it.manual) return a;
       return a + (Number(it.h)||0);
     },0);
-    const shelfBoards = polki.length * 18; // grubość płyty każdej półki (auto + manual)
+    const shelfBoards = sectionBoardCount(s) * 18; // płyty półek + półki nad/pod drążkiem
     const remain = Math.max(20*autoP.length, sectionInteriorH(si) - fixed - shelfBoards);
     const h = Math.max(20, Math.floor(remain / autoP.length));
     autoP.forEach(p=> p.h = h);
@@ -2185,7 +2306,48 @@ function renderFrontSections(){
         <button class="fs-toggle-btn ${!has?'on':''}" data-si="${si}" data-v="0">Otwarta</button>
       </div>
     `;
+    if(has){
+      const cand = frontCutCandidates(s);
+      const zones = frontZones(si);
+      const nm = it => (ITEM_TYPES[it.type]||{}).name || it.type;
+      const lbl = z => s.items.slice(z.from, z.to+1).map(nm).join(', ');
+      const ed = document.createElement('div');
+      ed.className = 'fz-edit';
+      // wysokość podziału od podłogi wnętrza (dołu sekcji) i od góry
+      const fhAll = (sectionCabinetH(si) - 36) - (bandSpans(si) ? STATE.band.h : 0) - (s.lift||0);
+      const zAll = frontZones(si);
+      const cutPos = ci => {
+        // położenie środka półki pod elementem ci, jako ułamek od góry
+        const tmp = Object.assign({}, s, {frontCuts:[ci], frontOpen:[]});
+        const keep = STATE.sections[si]; STATE.sections[si] = tmp;
+        const z = frontZones(si); STATE.sections[si] = keep;
+        return z.length > 1 ? z[0].f1 : 1;
+      };
+      ed.innerHTML = (cand.length ? `<div class="fz-cuts"><span class="fz-lbl">Podziel front na półce <span class="fz-dir">(numeracja od góry)</span>:</span>${cand.map((ci,k)=>{ const f = cutPos(ci); const fromTop = Math.round(f*fhAll), fromBot = Math.round((1-f)*fhAll); return `<button type="button" class="fz-cut ${(s.frontCuts||[]).includes(ci)?'on':''}" data-si="${si}" data-ci="${ci}" title="Półka ${k+1} od góry — ${fromTop} mm od góry, ${fromBot} mm od dołu frontu">${k+1}</button>`; }).join('')}</div>` : '')
+        + (zones.length > 1 ? zones.map(z=>`<div class="fz-zone"><span class="fz-zn">${z.zi===0?'Góra':(z.zi===zones.length-1?'Dół':'Środek')}</span><span class="fz-items">${lbl(z)}</span><span class="fz-h mono" title="Wysokość frontu w tej strefie; od dołu sekcji">${Math.round((z.f1-z.f0)*fhAll)} mm · od dołu ${Math.round((1-z.f1)*fhAll)}–${Math.round((1-z.f0)*fhAll)}</span><span class="fs-toggle"><button type="button" class="fz-tg ${!z.open?'on':''}" data-si="${si}" data-zi="${z.zi}" data-v="1">Front</button><button type="button" class="fz-tg ${z.open?'on':''}" data-si="${si}" data-zi="${z.zi}" data-v="0">Otwarte</button></span></div>`).join('') : '');
+      if(ed.innerHTML) row.appendChild(ed);
+    }
     list.appendChild(row);
+  });
+  list.querySelectorAll('.fz-cut').forEach(b=>{
+    b.onclick = ()=>{
+      const s = STATE.sections[+b.dataset.si], ci = +b.dataset.ci;
+      const cuts = new Set(s.frontCuts||[]);
+      cuts.has(ci) ? cuts.delete(ci) : cuts.add(ci);
+      s.frontCuts = [...cuts].sort((a,b)=>a-b);
+      s.frontOpen = [];
+      renderFrontSections(); renderPreview(); updatePrice(); saveState();
+    };
+  });
+  list.querySelectorAll('.fz-tg').forEach(b=>{
+    b.onclick = ()=>{
+      const si = +b.dataset.si, s = STATE.sections[si], zi = +b.dataset.zi;
+      const op = new Set(s.frontOpen||[]);
+      b.dataset.v==='1' ? op.delete(zi) : op.add(zi);
+      if(op.size >= frontZones(si).length){ toast('Przynajmniej jedna strefa z frontem — albo ustaw sekcję jako otwartą'); return; }
+      s.frontOpen = [...op];
+      renderFrontSections(); renderPreview(); updatePrice(); saveState();
+    };
   });
   list.querySelectorAll('.fs-toggle-btn').forEach(b=>{
     b.onclick = ()=>{
@@ -2358,7 +2520,16 @@ function renderPreview(){
     } else {
       // front view
       const hasFront = STATE.frontMode==='sliding' ? false : STATE.sectionFronts[si];
-      if(hasFront){
+      const __zones = hasFront ? frontZones(si) : [];
+      if(hasFront && (__zones.length > 1 || __zones.some(z=>z.open))){
+        content += drawInteriorContent(s,cx,secY,sw,secH,matC,dark);
+        const cid = 'fz'+si;
+        const rects = frontLeaves(si).map(lf=>`<rect x="${cx}" y="${secY + lf.f0*secH + (lf.f0>0?1:0)}" width="${sw}" height="${(lf.f1-lf.f0)*secH - (lf.f0>0?1:0) - (lf.f1<1?1:0)}"/>`).join('');
+        content += `<defs><clipPath id="${cid}">${rects}</clipPath></defs><g clip-path="url(#${cid})">${drawFront(s,cx,secY,sw,secH,matF,darkF,si)}</g>`;
+        frontLeaves(si).forEach(lf=>{
+          content += `<rect x="${cx+2}" y="${secY + lf.f0*secH + 1}" width="${sw-4}" height="${(lf.f1-lf.f0)*secH - 2}" fill="none" stroke="${darkF}" stroke-width=".7"/>`;
+        });
+      } else if(hasFront){
         content += drawFront(s,cx,secY,sw,secH,matF,darkF,si);
       } else {
         content += drawInteriorContent(s,cx,secY,sw,secH,matC,dark);
@@ -2381,8 +2552,15 @@ function renderPreview(){
       }
     }
     // podział szafki na dół + nadstawkę (podwójny wieniec)
-    const partsH = sectionParts(si);
-    if(partsH.length > 1){
+    const __plan = sectionSplitPlan(si);
+    const partsH = __plan.parts;
+    if(__plan.joints.some(j=>j.afterIdx>=0)){
+      interiorLayout(s, si, secH-4).joints.forEach(j=>{
+        const yj = secY + 2 + j.y;
+        content += `<rect x="${cx}" y="${yj}" width="${sw}" height="${j.h}" fill="${shade(fill,-0.06)}" stroke="${dark}" stroke-width=".8"/>`;
+        content += `<line x1="${cx}" y1="${yj + j.h/2}" x2="${cx+sw}" y2="${yj + j.h/2}" stroke="${dark}" stroke-width=".6"/>`;
+      });
+    } else if(partsH.length > 1){
       let cum = 0;
       for(let p=0;p<partsH.length-1;p++){
         cum += partsH[p];
@@ -2661,29 +2839,36 @@ function drawInteriorContent(s,x,y,sw,sh,mat,dark){
   const totalH = s.items.reduce((a,it)=>a+(Number(it.h)||0),0) || 1;
   const H = sh-4;
   let acc = 0;
-  s.items.forEach(it=>{
-    const hpx = (Number(it.h)||0)/totalH * H;
+  const __si = STATE.sections.indexOf(s);
+  const __L = interiorLayout(s, __si, H);
+  s.items.forEach((it,__idx)=>{
+    const hpx = (Number(it.h)||0) * __L.k;
     const y0 = y+2+acc, y1 = y0+hpx;
+    const __rep = __L.joints.some(j=>j.afterIdx===__idx && j.replaces);
     if(it.type==='polka'){
-      // top line is the shelf
-      out += `<line x1="${x+4}" y1="${y1}" x2="${x+sw-4}" y2="${y1}" stroke="${dark}" stroke-width=".9"/>`;
+      // półka (linia u dołu pola) — pomijana, gdy w tym miejscu jest styk dół/nadstawka
+      if(!__rep) out += `<line x1="${x+4}" y1="${y1}" x2="${x+sw-4}" y2="${y1}" stroke="${dark}" stroke-width=".9"/>`;
       // wariant z pionową przegródką — pionowa kreska na środku pola tej półki
       if(it.variant==='przegroda'){
         out += `<line x1="${x+sw/2}" y1="${y0}" x2="${x+sw/2}" y2="${y1}" stroke="${dark}" stroke-width=".9"/>`;
       }
     } else if(it.type==='drazek'){
-      const midY = (y0+y1)/2;
-      out += `<line x1="${x+8}" y1="${y0+10}" x2="${x+sw-8}" y2="${y0+10}" stroke="${dark}" stroke-width="2"/>`;
-      out += `<circle cx="${x+10}" cy="${y0+10}" r="2" fill="${dark}"/>`;
-      out += `<circle cx="${x+sw-10}" cy="${y0+10}" r="2" fill="${dark}"/>`;
-      // hangers
-      const hang = Math.max(2, Math.min(5, Math.floor(sw/30)));
-      for(let i=0;i<hang;i++){
-        const hx = x + 14 + (i*(sw-28)/hang);
-        const hyBot = Math.min(y1-4, y0+10+hpx*0.4);
-        out += `<path d="M${hx} ${y0+10} L${hx-5} ${hyBot} L${hx+5} ${hyBot} Z" fill="none" stroke="${dark}" stroke-width=".6"/>`;
+      // strefa wieszania: od półki nad drążkiem do półki pod nim; ubrania na wieszakach
+      const __rs = rodShelves(s, __idx);
+      if(__rs.above) out += `<line x1="${x+4}" y1="${y0}" x2="${x+sw-4}" y2="${y0}" stroke="${dark}" stroke-width=".9"/>`;
+      if(__rs.below && !__rep) out += `<line x1="${x+4}" y1="${y1}" x2="${x+sw-4}" y2="${y1}" stroke="${dark}" stroke-width=".9"/>`;
+      const ry = y0 + Math.max(4, 100 * __L.k);   // drążek 100 mm pod półką nad nim
+      out += `<line x1="${x+5}" y1="${ry}" x2="${x+sw-5}" y2="${ry}" stroke="${dark}" stroke-width="2.2" stroke-linecap="round"/>`;
+      out += `<rect x="${x+4}" y="${ry-3}" width="3" height="6" fill="${dark}"/><rect x="${x+sw-7}" y="${ry-3}" width="3" height="6" fill="${dark}"/>`;
+      const gn = Math.max(2, Math.min(9, Math.floor((sw-16)/14)));
+      const gs = (sw-24)/gn;
+      for(let i=0;i<gn;i++){
+        const gx = x + 12 + gs*i + gs/2;
+        const len = hpx * (i%3===1 ? 0.62 : (i%3===2 ? 0.8 : 0.7));
+        const gb = Math.min(y1 - 3, ry + len);
+        out += `<path d="M${gx} ${ry} q0 -3 2 -3" fill="none" stroke="${dark}" stroke-width=".6"/>`;
+        out += `<path d="M${gx-gs*0.4} ${ry+8} L${gx} ${ry+1} L${gx+gs*0.4} ${ry+8} L${gx+gs*0.36} ${gb} L${gx-gs*0.36} ${gb} Z" fill="${shade(mat.color,-0.08)}" stroke="${dark}" stroke-width=".5" opacity=".85"/>`;
       }
-      out += `<line x1="${x+4}" y1="${y1}" x2="${x+sw-4}" y2="${y1}" stroke="${dark}" stroke-width=".9"/>`;
     } else if(it.type==='szuflady'){
       // legacy
       const n = (it.opts && it.opts.count) || 4;
@@ -2739,6 +2924,8 @@ function drawInteriorContent(s,x,y,sw,sh,mat,dark){
       if(hpx>20) out += `<line x1="${x+4}" y1="${y1}" x2="${x+sw-4}" y2="${y1}" stroke="${dark}" stroke-width=".6" opacity=".5" stroke-dasharray="2 2"/>`;
     }
     acc += hpx;
+    const __j = __L.joints.find(j=>j.afterIdx===__idx);
+    if(__j) acc += __j.h;
   });
   return out;
 }
@@ -3204,9 +3391,7 @@ function buildAccessoryList(){
     const hinge = HINGES.find(x=>x.id===STATE.hinges) || HINGES[0];
     let n = 0;
     STATE.sections.forEach((s,si)=>{
-      if(!STATE.sectionFronts[si]) return;
-      const fh = (STATE.dim.h - 36) - (bandSpans(si) ? STATE.band.h : 0);
-      n += hingeCount(fh);
+      frontLeaves(si).forEach(lf=>{ n += hingeCount(lf.h); });
     });
     if(n) push(`Zawiasy — ${hinge.name}`, hinge.brand, n, hinge.price||0, n * (hinge.price||0));
 
@@ -3527,8 +3712,7 @@ function buildSpecHTML(refNo){
     </table>
   </td></tr>
 
-  <tr><td style="padding:10px 12px;background:#1a1a17;color:#f5f1e8;font-weight:500">CENA NETTO</td><td style="padding:10px 12px;background:#1a1a17;color:#f5f1e8;font-family:'JetBrains Mono',monospace">${fmtZL(p.total_net)}</td></tr>
-  <tr><td style="padding:10px 12px;background:#1a1a17;color:#b8915a;font-weight:500">CENA BRUTTO (VAT ${Math.round(p.vat_rate*100)}%)</td><td style="padding:10px 12px;background:#1a1a17;color:#b8915a;font-family:'JetBrains Mono',monospace;font-size:16px">${fmtZL(p.total_gross)}</td></tr>
+  <tr><td style="padding:10px 12px;background:#1a1a17;color:#b8915a;font-weight:500">CENA</td><td style="padding:10px 12px;background:#1a1a17;color:#b8915a;font-family:'JetBrains Mono',monospace;font-size:16px">${fmtZL(p.total_gross)}</td></tr>
 
   <tr><td colspan="2" style="padding-top:14px">
     <div style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.06em;color:#6a6a62">
@@ -3823,8 +4007,7 @@ function renderSummary(){
     </div>
 
     <div class="sum-total">
-      <div class="sum-vat-line"><span>Netto (bez VAT)</span><span class="mono">${fmtPrice(pb.netto)}</span></div>
-      <div class="sum-brutto-line"><span class="k">Cena brutto (z VAT ${Math.round(pb.vat*100)}%)</span><span class="v">${fmtPrice(price)}</span></div>
+      <div class="sum-brutto-line"><span class="k">Cena orientacyjna</span><span class="v">${fmtPrice(price)}</span></div>
     </div>
   `;
 }
@@ -3837,7 +4020,7 @@ function updatePrice(){
   el.classList.add('updating');
   const p = computePrice();
   setTimeout(()=>{
-    el.innerHTML = fmtPrice(p) + ' <em>brutto</em>';
+    el.innerHTML = fmtPrice(p);
     el.classList.remove('updating');
   },120);
 }

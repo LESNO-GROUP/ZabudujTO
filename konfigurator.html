@@ -134,6 +134,18 @@
   .blenda-title{font-family:var(--ff-serif);font-size:1.05rem}
   .blenda-head{display:flex;align-items:flex-start;justify-content:space-between;gap:1rem}
   .blenda-row[hidden]{display:none !important}
+  .fz-edit{grid-column:1/-1;display:flex;flex-direction:column;gap:.35rem;margin-top:.5rem;padding-top:.5rem;border-top:1px dashed var(--line)}
+  .fz-cuts{display:flex;align-items:center;gap:.3rem;flex-wrap:wrap}
+  .fz-lbl{font-size:.72rem;color:var(--ink-mute);margin-right:.2rem}
+  .fz-cut{width:28px;height:28px;border:1px solid var(--line);background:var(--card);border-radius:2px;font-family:var(--ff-mono);font-size:.72rem;cursor:pointer;color:var(--ink-mute)}
+  .fz-cut.on{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+  .fz-dir{opacity:.7;font-style:italic}
+  .fz-h{font-size:.66rem;color:var(--ink-mute);flex-shrink:0;white-space:nowrap}
+  .fz-zone{display:flex;align-items:center;gap:.6rem;font-size:.76rem}
+  .fz-zn{font-family:var(--ff-mono);font-size:.64rem;letter-spacing:.06em;text-transform:uppercase;color:var(--accent);width:52px;flex-shrink:0}
+  .fz-items{flex:1;min-width:0;color:var(--ink-mute);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .fz-tg{padding:.3rem .6rem;font-size:.7rem;border:none;background:var(--card);cursor:pointer;color:var(--ink-mute)}
+  .fz-tg.on{background:var(--ink);color:var(--paper)}
   .sec-warnings{display:flex;flex-direction:column;gap:.4rem;margin-bottom:.8rem}
   .sec-warnings[hidden]{display:none !important}
   .vw{display:flex;gap:.6rem;align-items:flex-start;padding:.6rem .8rem;border-radius:2px;font-size:.8rem;line-height:1.45}
@@ -339,7 +351,7 @@
   #frontSections{display:none;margin-bottom:1rem}
   #frontSections.show{display:block}
   .fs-list{display:flex;flex-direction:column;gap:.4rem;margin-top:.5rem}
-  .fs-row{display:flex;align-items:center;gap:.65rem;padding:.55rem .8rem;background:var(--card);border:1px solid var(--line);border-radius:2px}
+  .fs-row{display:flex;flex-wrap:wrap;align-items:center;gap:.65rem;padding:.55rem .8rem;background:var(--card);border:1px solid var(--line);border-radius:2px}
   .fs-name{flex:1;font-size:.85rem;display:flex;align-items:center;gap:.6rem}
   .fs-name .idx{font-family:var(--ff-mono);font-size:.62rem;color:var(--accent);letter-spacing:.08em}
   .fs-toggle{display:flex;border:1px solid var(--line);border-radius:2px;overflow:hidden}
@@ -1224,9 +1236,9 @@
 })();
 </script>
 
-<script src="konfigurator-data.js?v=221"></script>
-<script src="konfigurator-3d.js?v=221"></script>
-<script src="konfigurator-docs.js?v=221"></script>
-<script src="konfigurator-app.js?v=221"></script>
+<script src="konfigurator-data.js?v=227"></script>
+<script src="konfigurator-3d.js?v=227"></script>
+<script src="konfigurator-docs.js?v=227"></script>
+<script src="konfigurator-app.js?v=227"></script>
 </body>
 </html>

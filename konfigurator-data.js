@@ -27,12 +27,12 @@ const ITEM_TYPES = {
     {id:'zwykla',     name:'Półka zwykła',          price:0,  desc:'Pełna deska na całą szerokość sekcji'},
     {id:'przegroda',  name:'Półka z przegródką',     price:19, desc:'Podzielona pionowo na środku — część lewa i prawa'},
   ]},
-  'drazek':  {name:'Drążek',               price:49,  icon:'rod',        defaultH:60, variants:[
+  'drazek':  {name:'Drążek',               price:49,  icon:'rod',        defaultH:1000, variants:[
     {id:'prosty-owal',    name:'Prosty owalny',           price:19,  desc:'Stalowy profil 30×15 mm, chromowany', image:'assets/akcesoria/rod-prosty-owal.png'},
     {id:'prosty-fi25-chrom', name:'Prosty okrągły Ø25',   price:19,  desc:'Drążek okrągły Ø25 mm, chromowany',   image:'assets/akcesoria/rod-fi25-chrom.png'},
     {id:'prosty-fi25-czarny',name:'Prosty okrągły Ø25 czarny', price:25, desc:'Drążek okrągły Ø25 mm, czerń matowa', image:'assets/akcesoria/rod-fi25-czarny.png'},
     {id:'pantograf',      name:'Pantograf',               price:179, desc:'Wysuwny — sekcja 545–1200 mm', brand:'GTV', minSecW:545, maxSecW:1200, image:'assets/akcesoria/rod-pantograf.png'},
-  ], note:'Max szerokość drążka to 1200 mm. Powyżej stosuje się drążek Ø32 mm (+100 zł/mb).'},
+  ], note:'Wysokość elementu = strefa wieszania pod drążkiem (krótkie ubrania ok. 900 mm, długie ok. 1500 mm). Wysokość = od półki nad drążkiem do półki pod nim; drążek wisi 100 mm pod półką. Półki nad i pod dodawane zawsze, chyba że drążek jest na samej górze lub na dole. Maks. szerokość drążka 1300 mm.'},
   'szuflada':{name:'Szuflada',             price:140, icon:'drawer',     defaultH:180, variants:[
     {id:'standard',  name:'Standard z domykiem',     price:129, desc:'Prowadnice kulkowe z hamulcem (soft-close)'},
     {id:'modernbox', name:'ModernBox',               price:175, desc:'Metalowe boki, biel/antracyt', brand:'GTV', frameColors:['antracyt','bialy'], image:'assets/akcesoria/modernbox.png', minSecW:100, maxSecW:1000, minD:350},

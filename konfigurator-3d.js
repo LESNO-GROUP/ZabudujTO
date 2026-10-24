@@ -195,7 +195,7 @@
         g.add(box(secW, T, D, x + secW/2, base + secTop - T/2, 0, corpusMat));
       }
       // podział na dół + nadstawkę — podwójny wieniec na styku
-      if(sec.parts && sec.parts.length > 1){
+      if(sec.parts && sec.parts.length > 1 && !(sec.split && sec.split.joints.some(j=>j.afterIdx>=0))){
         let cum = 0;
         for(let p=0;p<sec.parts.length-1;p++){
           cum += sec.parts[p];
@@ -214,17 +214,20 @@
       // więc stackujemy od góry w dół
       let accTop = 0;
       const dInner = D - 20;
-      sec.items.forEach(it=>{
+      sec.items.forEach((it, idx)=>{
         const ih = Number(it.h) || 0;
+        const jt = (sec.split && sec.split.joints) ? sec.split.joints.find(j=>j.afterIdx===idx) : null;
+        const rsh = (it.type==='drazek' && typeof rodShelves==='function') ? rodShelves(sec, idx) : null;
+        if(rsh && rsh.above){ g.add(box(secW - 4, T, dInner, x + secW/2, yTop - accTop - T/2, 0, corpusMat)); accTop += T; }
         const yTo = yTop - accTop;        // górna krawędź pola (światło)
         accTop += ih;
         // półka zajmuje dodatkowo 18 mm płyty pod światłem — tak jak budżetuje
         // normalizeShelfHeights() (it.h = światło, płyta liczona osobno)
-        if(it.type === 'polka') accTop += T;
+        if(it.type === 'polka' || (rsh && rsh.below)) accTop += T;
         const yFrom = yTop - accTop;      // dolna krawędź pola (spód płyty)
         const cxs = x + secW/2;
         if(it.type === 'polka'){
-          g.add(box(secW - 4, T, dInner, cxs, yFrom + T/2, 0, corpusMat));
+          if(!(jt && jt.replaces)) g.add(box(secW - 4, T, dInner, cxs, yFrom + T/2, 0, corpusMat));
           if(it.variant === 'przegroda'){
             g.add(box(T, ih - T, dInner - 20, cxs, yFrom + T + (ih-T)/2, 0, corpusMat));
           }
@@ -233,8 +236,19 @@
           const geo = new THREE.CylinderGeometry(r*MM, r*MM, (secW-30)*MM, 14);
           const rod = new THREE.Mesh(geo, metalMat);
           rod.rotation.z = Math.PI/2;
-          rod.position.set(cxs*MM, (yTo - 60)*MM, 0);
+          rod.position.set(cxs*MM, (yTo - 100)*MM, 0);
           g.add(rod);
+          // wsporniki + ubrania na wieszakach
+          g.add(box(20, 40, 30, x + 12, yTo - 100, 0, metalMat));
+          g.add(box(20, 40, 30, x + secW - 12, yTo - 100, 0, metalMat));
+          const fab = new THREE.MeshStandardMaterial({ color:0x9a9488, roughness:.95 });
+          const gn = Math.max(2, Math.min(8, Math.floor(secW/90)));
+          for(let k=0;k<gn;k++){
+            const gx = x + 40 + (secW-80)*(k+.5)/gn;
+            const len = Math.max(120, Math.min(ih - 130, ih*(k%3===1 ? 0.62 : (k%3===2 ? 0.8 : 0.7))));
+            g.add(box(14, len, Math.min(440, dInner - 80), gx, yTo - 110 - len/2, 0, fab));
+          }
+          if(rsh && rsh.below && !(jt && jt.replaces)) g.add(box(secW - 4, T, dInner, cxs, yFrom + T/2, 0, corpusMat));
         } else if(it.type === 'szuflada' || it.type === 'szuflady'){
           const cnt = it.type === 'szuflady' ? ((it.opts && it.opts.count) || 4) : 1;
           const dh = ih / cnt;
@@ -252,6 +266,13 @@
           dr.position.set(cxs*MM, (yFrom + ih/2)*MM, (D/2 - 60)*MM);
           g.add(dr);
         }
+        // styk dół/nadstawka — podwójny wieniec pod tym polem
+        if(jt){
+          const jTop = yTo - ih;
+          accTop = (yTop - jTop) + 36;
+          g.add(box(secW, T, D, cxs, jTop - T/2, 0, corpusMat));
+          g.add(box(secW, T, D, cxs, jTop - 3*T/2, 0, corpusMat));
+        }
       });
 
       // przelotowa półka (band)
@@ -263,12 +284,17 @@
       // fronty uchylne — rysowane zamknięte (domyślnie ukryte, żeby było widoczne wnętrze)
       if(S.frontMode === 'hinged' && S.sectionFronts[si] && S.showFronts){
         const fh = yTop - yBot;
-        if(fh > 40){
-          const leaf = box(secW - 4, fh, T, x + secW/2, yBot + fh/2, D/2 + T/2, frontMat);
-          leaf.name = 'front-'+si;
+        const lvs = (sec.leaves && sec.leaves.length) ? sec.leaves : (fh > 40 ? [{f0:0, f1:1}] : []);
+        lvs.forEach((lf, li)=>{
+          const lt = yTop - lf.f0*fh - (lf.f0>0?1.5:0);
+          const lb = yTop - lf.f1*fh + (lf.f1<1?1.5:0);
+          const lh = lt - lb;
+          if(lh < 40) return;
+          const leaf = box(secW - 4, lh, T, x + secW/2, lb + lh/2, D/2 + T/2, frontMat);
+          leaf.name = 'front-'+si+'-'+li;
           g.add(leaf);
-          g.add(box(18, 120, 18, x + secW - 45, yBot + fh*0.5, D/2 + T + 9, darkMat));
-        }
+          g.add(box(18, Math.min(120, lh*0.4), 18, x + secW - 45, lb + lh*0.5, D/2 + T + 9, darkMat));
+        });
       }
 
       x += secW + 2*T + 1;   // +1 mm luzu montażowego
@@ -383,6 +409,8 @@
       bandCut: (typeof bandSpans === 'function' && bandSpans(si) && S.band) ? S.band.h : 0,
       bandTop: S.band ? S.band.position === 'top' : false,
       parts: (typeof sectionParts === 'function') ? sectionParts(si) : null,
+      split: (typeof sectionSplitPlan === 'function') ? sectionSplitPlan(si) : null,
+      leaves: (typeof frontLeaves === 'function') ? frontLeaves(si) : null,
     }));
     return {
       dim: S.dim, cabW: W, cabH: H, baseOffset: base, base: S.base,
