@@ -3175,7 +3175,7 @@ function dimLabel(x1,y1,x2,y2,txt,dir){
 // ────────────────────────────────────────────────────────────
 window.__attachments = window.__attachments || [];
 const MAX_FILES = 5;
-const MAX_TOTAL_BYTES = 10 * 1024 * 1024;
+const MAX_TOTAL_BYTES = 3 * 1024 * 1024;
 
 function fmtBytes(n){
   if(n < 1024) return n + ' B';
@@ -3209,7 +3209,7 @@ function addFiles(files){
     if(window.__attachments.length >= MAX_FILES){ toast('Maks. '+MAX_FILES+' plików'); break; }
     if(!allowed.test(f.name)){ toast('Niedozwolony format: '+f.name); continue; }
     const total = window.__attachments.reduce((a,x)=>a+x.size,0) + f.size;
-    if(total > MAX_TOTAL_BYTES){ toast('Łączny rozmiar przekracza 10 MB'); break; }
+    if(total > MAX_TOTAL_BYTES){ toast('Łączny rozmiar załączników przekracza 3 MB'); break; }
     window.__attachments.push(f);
   }
   renderFileList();
@@ -3728,6 +3728,23 @@ function buildSpecHTML(refNo){
 
 window.ZTOrder = { buildSpec: buildOrderSpec, buildHTML: buildSpecHTML };
 
+// ── kompresja obrazów do maila (JPEG) ──────────────────────
+async function toJpeg(blob, maxW, q){
+  if(!blob) return null;
+  maxW = maxW || 1400; q = q || 0.82;
+  try{
+    const url = URL.createObjectURL(blob);
+    const img = await new Promise((res,rej)=>{ const i=new Image(); i.onload=()=>res(i); i.onerror=rej; i.src=url; });
+    const k = Math.min(1, maxW / img.naturalWidth);
+    const c = document.createElement('canvas');
+    c.width = Math.round(img.naturalWidth*k); c.height = Math.round(img.naturalHeight*k);
+    const x = c.getContext('2d'); x.fillStyle = '#ffffff'; x.fillRect(0,0,c.width,c.height);
+    x.drawImage(img, 0, 0, c.width, c.height);
+    URL.revokeObjectURL(url);
+    return await new Promise(r=>c.toBlob(b=>r(b), 'image/jpeg', q));
+  }catch(e){ return blob; }
+}
+
 // ── PREVIEW → PNG (do załączania w mailu) ──────────────────
 async function renderViewToPNG(view, scale){
   scale = scale || 2;
@@ -3797,9 +3814,9 @@ async function submitOrder(){
   try {
     var docImgs = window.__docImgs = {};
     const pngFront = await renderViewToPNG('front');
-    if(pngFront){ fd.append('files', pngFront, `${ref}-preview-front.png`); docImgs.front = pngFront; }
+    if(pngFront){ const j = await toJpeg(pngFront); fd.append('files', j, `${ref}-preview-front.jpg`); docImgs.front = j; }
     const pngOpen = await renderViewToPNG('open');
-    if(pngOpen){ fd.append('files', pngOpen, `${ref}-preview-open.png`); docImgs.open = pngOpen; }
+    if(pngOpen){ const j = await toJpeg(pngOpen); fd.append('files', j, `${ref}-preview-open.jpg`); docImgs.open = j; }
     // render 3D
     if(window.ZT3D){
       const prevView = STATE.previewView;
@@ -3812,16 +3829,16 @@ async function submitOrder(){
       window.ZT3D.update();
       await new Promise(r=>setTimeout(r, 350));
       const pngIsoFront = await window.ZT3D.toIsoPNG();
-      if(pngIsoFront){ fd.append('files', pngIsoFront, `${ref}-3d-front-izo.png`); docImgs.iso = pngIsoFront; }
+      if(pngIsoFront){ const j = await toJpeg(pngIsoFront); fd.append('files', j, `${ref}-3d-front-izo.jpg`); docImgs.iso = j; }
       // 2) izometryk bez frontów — układ wnętrza
       window.__v3dShowFronts = false;
       window.ZT3D.update();
       await new Promise(r=>setTimeout(r, 350));
       const pngIsoOpen = await window.ZT3D.toIsoPNG();
-      if(pngIsoOpen){ fd.append('files', pngIsoOpen, `${ref}-3d-wnetrze-izo.png`); docImgs.isoOpen = pngIsoOpen; }
+      if(pngIsoOpen){ const j = await toJpeg(pngIsoOpen); fd.append('files', j, `${ref}-3d-wnetrze-izo.jpg`); docImgs.isoOpen = j; }
       // 3) perspektywa
       const png3d = await window.ZT3D.toPNG();
-      if(png3d) fd.append('files', png3d, `${ref}-3d-perspektywa.png`);
+      if(png3d) fd.append('files', await toJpeg(png3d), `${ref}-3d-perspektywa.jpg`);
       window.__v3dShowFronts = prevFronts;
       STATE.previewView = prevView;
       applyViewMode();
@@ -3831,7 +3848,7 @@ async function submitOrder(){
     const sk = window.__sketch;
     if(sk && sk.dataUrl){
       const blob = await (await fetch(sk.dataUrl)).blob();
-      fd.append('files', blob, `${ref}-szkic-wneki.png`);
+      fd.append('files', await toJpeg(blob, 1200, 0.85), `${ref}-szkic-wneki.jpg`);
     }
   } catch(e) {
     console.warn('Preview render failed (ignoring):', e);
@@ -3843,7 +3860,7 @@ async function submitOrder(){
     const src = window.__docImgs || {}, imgs = {};
     for(const k of Object.keys(src)) imgs[k] = await toURL(src[k]);
     if(window.ZTDocs){
-      const instr = window.ZTDocs.buildInstructionHTML(ref, imgs);
+      const instr = window.ZTDocs.buildInstructionHTML(ref, {});
       fd.append('files', new Blob([instr], {type:'text/html'}), `${ref}-instrukcja-montazu.html`);
       window.__confirmHTML = window.ZTDocs.buildConfirmationHTML(ref, imgs);
     }
@@ -3855,15 +3872,26 @@ async function submitOrder(){
   if(btn){ btn.disabled = true; if(lbl) lbl.textContent = 'Wysyłanie…'; }
 
   try{
+    // Vercel przyjmuje maks. ~4,5 MB na zapytanie — odrzuć zbędne rendery, jeśli za dużo
+    const sizeOf = () => { let s = 0; for(const [,v] of fd.entries()) s += (v && v.size!=null) ? v.size : String(v).length; return s; };
+    const LIMIT = 4.2 * 1024 * 1024;
+    if(sizeOf() > LIMIT){
+      const drop = n => { const keep = fd.getAll('files').filter(f=>!(f.name||'').includes(n)); fd.delete('files'); keep.forEach(f=>fd.append('files', f, f.name)); };
+      ['3d-perspektywa','3d-wnetrze-izo','preview-open','3d-front-izo'].forEach(n=>{ if(sizeOf() > LIMIT) drop(n); });
+    }
+    if(sizeOf() > LIMIT){ throw new Error('Za duże załączniki (' + (sizeOf()/1048576).toFixed(1) + ' MB) — maks. ok. 4 MB łącznie. Zmniejsz lub usuń część plików.'); }
     const res = await fetch('/api/send', { method:'POST', body: fd });
-    if(!res.ok){ throw new Error('HTTP '+res.status); }
+    if(!res.ok){
+      let det = ''; try{ const j = await res.json(); det = j.error || ''; }catch(e){}
+      throw new Error(res.status === 413 ? 'Za duże załączniki — maks. ok. 4 MB łącznie.' : ('Błąd serwera ' + res.status + (det ? ' — ' + det : '')));
+    }
     // success
     document.getElementById('successRef').textContent = ref;
     document.getElementById('success').classList.add('show');
     window.__attachments = [];
     try{ localStorage.removeItem(STORAGE_KEY); }catch(e){}
   }catch(err){
-    toast('Nie udało się wysłać. Spróbuj ponownie lub napisz na kontakt@zabudujto.pl');
+    toast('Nie udało się wysłać: ' + (err && err.message ? err.message : 'błąd połączenia') + '. Napisz na kontakt@zabudujto.pl, jeśli problem się powtarza.');
     console.error('Submit error:', err);
   }finally{
     if(btn){ btn.disabled = false; if(lbl) lbl.textContent = prevLbl; }

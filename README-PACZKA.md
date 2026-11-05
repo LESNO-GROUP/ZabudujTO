@@ -1,28 +1,17 @@
-# Paczka v154 — co zmienić w repo
+# Paczka v230 — naprawa wysyłki zapytań
 
-## Pliki do wgrania (zachowując strukturę)
+## Pliki do nadpisania na GitHub
+- konfigurator.html      (?v=230)
+- konfigurator-app.js
+- api/send.js            (do folderu api/)
+  Jeśli używasz WŁASNEJ wersji send.js — zmień w niej tylko:
+    name: `${ref}.json`   ->   name: `${ref}-specyfikacja.txt`
+    files: 6             ->   files: 20
 
-- konfigurator.html             → nadpisz w root
-- konfigurator-app.js           → nadpisz w root
-- api/send.js                   → NOWY — utwórz folder `api/` i wrzuć
-- package.json                  → NOWY — w root
-
-## Po wgraniu na GitHub
-
-Vercel zauważy package.json i sam zainstaluje `busboy`.
-
-## ENV VARS w Vercel (Project Settings → Environment Variables)
-
-| Klucz | Wartość |
-|---|---|
-| BREVO_API_KEY | klucz z https://app.brevo.com/settings/keys/api |
-| MAIL_FROM_EMAIL | poseydongroup.tech@gmail.com (zweryfikowany sender w Brevo) |
-| MAIL_FROM_NAME | ZabudujTO Konfigurator |
-| MAIL_TO | kontakt@zabudujto.pl |
-
-## Test
-
-1. Push do GitHub → Vercel zbuduje
-2. Otwórz /konfigurator.html
-3. Wypełnij krok 1–5, w 5 załącz dowolny plik
-4. „Wyślij projekt" → mail przyjdzie z pełną tabelą HTML + załącznikami + payload.json
+## Co naprawione
+- Rendery jako JPEG zamiast PNG (kilka razy mniejsze)
+- Instrukcja montażu bez osadzonych obrazów (wcześniej duplikowała kilka MB)
+- Kontrola rozmiaru przed wysyłką (limit Vercel ~4,5 MB); w razie potrzeby odrzuca zbędne rendery
+- Załączniki klienta: maks. 3 MB łącznie (było 10 MB)
+- Specyfikacja JSON wysyłana jako .txt (Brevo nie przyjmuje .json)
+- Komunikat błędu pokazuje przyczynę (rozmiar / kod błędu serwera)
