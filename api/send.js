@@ -18,7 +18,7 @@ import Busboy from 'busboy';
 
 function parseForm(req) {
   return new Promise((resolve, reject) => {
-    const bb = Busboy({ headers: req.headers, limits: { fileSize: 11 * 1024 * 1024, files: 6 } });
+    const bb = Busboy({ headers: req.headers, limits: { fileSize: 11 * 1024 * 1024, files: 20 } });
     const fields = {};
     const files = [];
     bb.on('field', (name, val) => {
@@ -69,6 +69,14 @@ export default async function handler(req, res) {
       name: f.name,
       content: f.buffer.toString('base64'),
     }));
+
+    // dodaj payload JSON jako załącznik, żeby można było zarchiwizować
+    if (fields.payload) {
+      attachments.push({
+        name: `${ref}.json`,
+        content: Buffer.from(fields.payload, 'utf-8').toString('base64'),
+      });
+    }
 
     const body = {
       sender: { email: fromEmail, name: fromName },
