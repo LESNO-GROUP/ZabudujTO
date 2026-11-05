@@ -3860,8 +3860,6 @@ async function submitOrder(){
     const src = window.__docImgs || {}, imgs = {};
     for(const k of Object.keys(src)) imgs[k] = await toURL(src[k]);
     if(window.ZTDocs){
-      const instr = window.ZTDocs.buildInstructionHTML(ref, {});
-      fd.append('files', new Blob([instr], {type:'text/html'}), `${ref}-instrukcja-montazu.html`);
       window.__confirmHTML = window.ZTDocs.buildConfirmationHTML(ref, imgs);
     }
   }catch(e){ console.warn('Docs build failed (ignoring):', e); }
@@ -3882,7 +3880,7 @@ async function submitOrder(){
     if(sizeOf() > LIMIT){ throw new Error('Za duże załączniki (' + (sizeOf()/1048576).toFixed(1) + ' MB) — maks. ok. 4 MB łącznie. Zmniejsz lub usuń część plików.'); }
     const res = await fetch('/api/send', { method:'POST', body: fd });
     if(!res.ok){
-      let det = ''; try{ const j = await res.json(); det = j.error || ''; }catch(e){}
+      let det = ''; try{ const j = await res.json(); det = j.error || ''; if(j.details){ let m = j.details; try{ const dj = JSON.parse(j.details); m = (dj.code ? dj.code + ': ' : '') + (dj.message || j.details); }catch(e){} det += ' [' + String(m).slice(0,160) + ']'; console.error('Brevo:', j.details); } }catch(e){}
       throw new Error(res.status === 413 ? 'Za duże załączniki — maks. ok. 4 MB łącznie.' : ('Błąd serwera ' + res.status + (det ? ' — ' + det : '')));
     }
     // success
