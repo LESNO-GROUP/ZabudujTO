@@ -10,7 +10,7 @@
 export const config = {
   api: {
     bodyParser: false, // multipart parsujemy ręcznie
-    sizeLimit: '15mb',
+    sizeLimit: '4.5mb',
   },
 };
 
@@ -73,7 +73,7 @@ export default async function handler(req, res) {
     // dodaj payload JSON jako załącznik, żeby można było zarchiwizować
     if (fields.payload) {
       attachments.push({
-        name: `${ref}.json`,
+        name: `${ref}-specyfikacja.txt`,
         content: Buffer.from(fields.payload, 'utf-8').toString('base64'),
       });
     }
