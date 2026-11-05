@@ -2043,6 +2043,7 @@ function renderSlidingBlock(){
     ergo:`<svg viewBox="0 0 30 30" fill="none"><rect x="4" y="3" width="22" height="24" stroke="#1a1a17" stroke-width="1.3"/><rect x="6" y="5" width="18" height="20" fill="#1a1a17" opacity=".05"/><rect x="13" y="11" width="4" height="8" fill="#1a1a17"/></svg>`,
     loca:`<svg viewBox="0 0 30 30" fill="none"><rect x="4" y="3" width="22" height="24" stroke="#1a1a17" stroke-width="1.3"/><rect x="6" y="5" width="18" height="20" fill="#1a1a17" opacity=".05"/><circle cx="15" cy="15" r="3.2" fill="#1a1a17"/></svg>`,
     dzielony:`<svg viewBox="0 0 30 30" fill="none"><rect x="4" y="3" width="22" height="24" stroke="#1a1a17" stroke-width="1.3"/><line x1="4" y1="11" x2="26" y2="11" stroke="#1a1a17" stroke-width="1.3"/><line x1="4" y1="19" x2="26" y2="19" stroke="#1a1a17" stroke-width="1.3"/></svg>`,
+    overline:`<svg viewBox="0 0 30 30" fill="none"><rect x="3" y="3" width="24" height="3" fill="#1a1a17" opacity=".7"/><rect x="5" y="7" width="20" height="20" fill="#1a1a17" opacity=".1"/><rect x="3" y="27" width="24" height="1.5" fill="#1a1a17" opacity=".7"/></svg>`,
     bezramowy:`<svg viewBox="0 0 30 30" fill="none"><rect x="5" y="3" width="20" height="24" fill="#1a1a17" opacity=".1"/><line x1="5" y1="3" x2="5" y2="27" stroke="#1a1a17" stroke-width=".5" opacity=".4"/><line x1="25" y1="3" x2="25" y2="27" stroke="#1a1a17" stroke-width=".5" opacity=".4"/></svg>`,
   };
 
@@ -2669,7 +2670,7 @@ function renderPreview(){
     let doors = '';
     const prof = STATE.slidingProfile;
     // rim width per system: novo 1mm, caro/nero/ergo/loca ~3mm, dzielony 3mm, bezramowy 0.5
-    const rimW = prof==='novo' ? 1.5 : prof==='bezramowy' ? 0.6 : 3;
+    const rimW = prof==='novo' ? 1.5 : (prof==='bezramowy' || prof==='overline') ? 0.6 : 3;
     // mirror gradient defs added once
     const fillFor = (fid) => {
       if(fid==='lustro') return `url(#mirrorG)`;
