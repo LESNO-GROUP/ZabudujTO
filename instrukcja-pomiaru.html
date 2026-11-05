@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Jak zmierzyć wnękę — instrukcja pomiaru | ZabudujTO</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+doc-page:not(:defined){visibility:hidden}
+*{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+:root{--ink:#1a1a17;--mute:#6a6a62;--line:#d9d3c4;--paper2:#f5f1e8;--accent:#b8915a;--clay:#a8552f}
+doc-page{font-family:'Inter',system-ui,sans-serif;color:var(--ink);font-size:10.5pt;line-height:1.55}
+a{color:var(--accent)}a:hover{color:var(--ink)}
+.mono{font-family:'JetBrains Mono',monospace}
+.head{display:flex;justify-content:space-between;align-items:flex-end;gap:1rem;padding-bottom:.6rem;border-bottom:2px solid var(--ink);margin-bottom:1.2rem}
+.head img{height:46px;width:auto;display:block}
+.head .meta{font-family:'JetBrains Mono',monospace;font-size:8pt;color:var(--mute);text-align:right;letter-spacing:.04em}
+h1{font-family:'Instrument Serif',serif;font-weight:400;font-size:30pt;line-height:1.05;margin:0 0 .4rem}
+h1 em{color:var(--accent)}
+.lede{font-size:11.5pt;color:var(--mute);max-width:60ch;margin:0 0 1.2rem}
+h2{font-family:'Instrument Serif',serif;font-weight:400;font-size:17pt;margin:1.6rem 0 .5rem;padding-bottom:.25rem;border-bottom:1px solid var(--line);display:flex;align-items:baseline;gap:.6rem;break-after:avoid}
+h2 .n{font-family:'JetBrains Mono',monospace;font-size:9pt;color:var(--accent);letter-spacing:.06em}
+h3{font-size:10.5pt;font-weight:600;margin:.9rem 0 .3rem;break-after:avoid}
+p{margin:0 0 .6rem}
+ul,ol{margin:0 0 .6rem;padding-left:1.2rem}
+li{margin-bottom:.25rem}
+.box{background:var(--paper2);padding:.75rem 1rem;border-radius:2px;margin:.7rem 0;break-inside:avoid}
+.box.warn{background:#f3ecd9;border-left:3px solid var(--accent)}
+.box.err{background:#f6e3da;border-left:3px solid var(--clay)}
+.box strong:first-child{display:block;margin-bottom:.2rem}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+.card{border:1px solid var(--line);border-radius:2px;padding:.75rem .9rem;break-inside:avoid}
+.card h3{margin-top:0}
+.card ol{margin-bottom:0}
+.tools{columns:2;column-gap:1.5rem}
+figure{margin:.8rem 0;break-inside:avoid}
+figure img{width:100%;height:auto;display:block;border:1px solid var(--line);border-radius:2px}
+figcaption{font-family:'JetBrains Mono',monospace;font-size:8pt;color:var(--mute);margin-top:.3rem}
+table{width:100%;border-collapse:collapse;font-size:9.5pt;margin:.4rem 0 .8rem}
+th,td{border:1px solid var(--line);padding:.45rem .55rem;text-align:left;vertical-align:middle}
+th{background:var(--paper2);font-family:'JetBrains Mono',monospace;font-size:7.5pt;letter-spacing:.06em;text-transform:uppercase;color:var(--mute);font-weight:500}
+td.fill{height:2.1rem;width:28%}
+tr{break-inside:avoid}
+.sheet-head{break-before:page}
+.lines div{border-bottom:1px solid var(--line);height:1.8rem}
+.foot{margin-top:1.4rem;padding-top:.5rem;border-top:1px solid var(--line);font-family:'JetBrains Mono',monospace;font-size:8pt;color:var(--mute);display:flex;justify-content:space-between}
+</style>
+</head>
+<body>
+<doc-page size="a4" margin="16mm">
+
+<div class="head">
+  <img src="assets/logo.png" alt="ZabudujTO"/>
+  <div class="meta">INSTRUKCJA POMIARU WNĘKI<br/>zabudujto.pl</div>
+</div>
+
+<h1>Jak zmierzyć <em>wnękę.</em></h1>
+<p class="lede">Dokładny pomiar to podstawa — formatki tniemy co do milimetra. Poświęć na to 15 minut, a mebel wejdzie bez docinania. Instrukcja prowadzi krok po kroku, a na końcu znajdziesz kartę pomiarów do wydrukowania i wypełnienia.</p>
+
+<h2><span class="n">1</span>Przygotowanie</h2>
+<h3>Narzędzia</h3>
+<ul class="tools">
+  <li><strong>Miarka zwijana</strong> (min. 3 m, sztywna taśma) lub dalmierz laserowy</li>
+  <li><strong>Poziomica</strong> (min. 60 cm)</li>
+  <li>Ołówek i ta karta pomiarów</li>
+  <li>Telefon do zdjęć</li>
+  <li>Druga osoba — przy szerokich i wysokich wnękach</li>
+</ul>
+<h3>Zanim zaczniesz</h3>
+<ul>
+  <li>Opróżnij wnękę i odsuń wszystko od ścian — mierz „gołe” ściany.</li>
+  <li><strong>Podłoga musi być docelowa.</strong> Jeśli planujesz panele, płytki lub wylewkę — mierz po ich ułożeniu albo doliczy ich grubość.</li>
+  <li>Zdejmij lub zanotuj <strong>listwy przypodłogowe</strong> — zabierają 10–20 mm głębokości i szerokości przy podłodze.</li>
+  <li>Wszystkie wymiary zapisuj w <strong>milimetrach</strong> (np. 2 384 mm, nie „238 i pół”).</li>
+</ul>
+
+<h2><span class="n">2</span>Schemat pomiaru</h2>
+<p>Ściany rzadko są idealnie proste, dlatego każdy wymiar mierzymy w kilku miejscach. Do konfiguratora wpisujesz zawsze <strong>najmniejszą</strong> wartość.</p>
+<figure>
+  <img src="assets/types/schemat-pomiaru.png" alt="Schemat pomiaru wnęki — punkty pomiaru szerokości, wysokości i głębokości"/>
+  <figcaption>Punkty pomiaru: szerokość (S), wysokość (W), głębokość (G)</figcaption>
+</figure>
+
+<div class="grid2">
+  <div class="card">
+    <h3>Szerokość — 4 pomiary</h3>
+    <ol>
+      <li><strong>Przód, góra</strong> — tuż pod sufitem, od ściany do ściany</li>
+      <li><strong>Przód, środek</strong> — na wysokości ok. 130 cm</li>
+      <li><strong>Przód, dół</strong> — tuż nad podłogą (nad listwą)</li>
+      <li><strong>Tył, dół</strong> — przy ścianie tylnej</li>
+    </ol>
+  </div>
+  <div class="card">
+    <h3>Wysokość — 4 pomiary</h3>
+    <ol>
+      <li><strong>Przód, lewa krawędź</strong> — od podłogi do sufitu</li>
+      <li><strong>Przód, środek</strong></li>
+      <li><strong>Przód, prawa krawędź</strong></li>
+      <li><strong>Tył, środek</strong> — przy ścianie tylnej</li>
+    </ol>
+  </div>
+  <div class="card">
+    <h3>Głębokość — 3 pomiary</h3>
+    <ol>
+      <li><strong>Górna</strong> — pod sufitem, od ściany tylnej do krawędzi wnęki</li>
+      <li><strong>Środkowa</strong> — na ok. 130 cm</li>
+      <li><strong>Dolna</strong> — przy podłodze (nad listwą)</li>
+    </ol>
+  </div>
+  <div class="card">
+    <h3>Przekątne — kontrola</h3>
+    <ol>
+      <li>Z lewego dolnego narożnika do prawego górnego</li>
+      <li>Z prawego dolnego do lewego górnego</li>
+    </ol>
+    <p style="margin:.4rem 0 0;font-size:9pt;color:var(--mute)">Różnica powyżej 10 mm oznacza, że wnęka nie jest prostokątna.</p>
+  </div>
+</div>
+
+<h2><span class="n">3</span>Jak mierzyć poprawnie</h2>
+<ul>
+  <li>Trzymaj miarkę <strong>poziomo</strong> przy szerokości i <strong>pionowo</strong> przy wysokości — sprawdź poziomicą. Ukośnie trzymana miarka zawsze pokaże za dużo.</li>
+  <li>Taśma ma być napięta i prosta, bez łuku. Przy dużych odległościach mierz we dwie osoby.</li>
+  <li>Przy pomiarze do sufitu dociśnij obudowę miarki do podłogi i odczytaj wartość z doliczeniem długości obudowy (podana na miarce) — albo użyj dalmierza.</li>
+  <li>Każdy wymiar zmierz <strong>dwa razy</strong>. Jeśli odczyty różnią się o więcej niż 2 mm, zmierz trzeci raz.</li>
+  <li>Sprawdź poziomicą <strong>pion ścian bocznych</strong> i <strong>poziom podłogi</strong> — zanotuj, jeśli coś odbiega.</li>
+</ul>
+
+<div class="box warn">
+  <strong>Ważne: wpisuj najmniejsze wartości</strong>
+  Do konfiguratora podaj najmniejszą szerokość, najmniejszą wysokość i najmniejszą głębokość. Szczeliny przy ścianach zamaskujemy blendami — ale mebla większego od wnęki nie da się wstawić.
+</div>
+
+<h2><span class="n">4</span>Przeszkody i nietypowe kształty</h2>
+<p>Zmierz i zanotuj wszystko, co wystaje ze ścian, sufitu lub podłogi. Każdą przeszkodę opisz trzema wymiarami: <strong>szerokość × wysokość × głębokość</strong> oraz jej położenie (od której ściany, od podłogi czy od sufitu).</p>
+<div class="grid2">
+  <div class="card">
+    <h3>Skośny sufit (poddasze, schody)</h3>
+    <ul>
+      <li>Wysokość przy <strong>wyższej</strong> ścianie</li>
+      <li>Wysokość przy <strong>niższej</strong> ścianie</li>
+      <li><strong>Długość prostego sufitu</strong> — odcinek od ściany do miejsca, gdzie zaczyna się skos</li>
+      <li>W którą stronę opada sufit</li>
+    </ul>
+  </div>
+  <div class="card">
+    <h3>Komin, pion, rura, uskok ściany</h3>
+    <ul>
+      <li>Przy której ścianie (lewa / prawa)</li>
+      <li>Czy od podłogi, czy od sufitu</li>
+      <li>Szerokość, wysokość i <strong>głębokość</strong> — o ile wystaje ze ściany</li>
+    </ul>
+  </div>
+  <div class="card">
+    <h3>Instalacje</h3>
+    <ul>
+      <li>Gniazdka, włączniki, wypusty oświetlenia</li>
+      <li>Zawory, liczniki, odpływy (zabudowa łazienkowa)</li>
+      <li>Położenie: odległość od podłogi i od najbliższej ściany</li>
+    </ul>
+  </div>
+  <div class="card">
+    <h3>Elementy przy wnęce</h3>
+    <ul>
+      <li>Ościeżnice drzwi, okna, parapety obok wnęki</li>
+      <li>Grzejnik, kratki wentylacyjne</li>
+      <li>Kierunek otwierania drzwi pokoju — czy nie zahaczą o fronty</li>
+    </ul>
+  </div>
+</div>
+
+<div class="box err">
+  <strong>Krzywe ściany?</strong>
+  Jeśli pomiary jednego wymiaru różnią się o więcej niż <strong>5 mm</strong> albo przekątne o więcej niż <strong>10 mm</strong> — zaznacz w konfiguratorze pole „Krzywe ściany lub nieregularny kształt wnęki”. Odezwiemy się i ustalimy dalsze kroki.
+</div>
+
+<h2><span class="n">5</span>Zdjęcia wnęki</h2>
+<p>Zdjęcia bardzo pomagają nam zweryfikować projekt. Dołącz je w ostatnim kroku konfiguratora.</p>
+<ul>
+  <li><strong>Całość na wprost</strong> — z odległości, tak żeby widać było całą wnękę, sufit i podłogę</li>
+  <li><strong>Oba boki pod kątem</strong> — lewy i prawy narożnik</li>
+  <li><strong>Każda przeszkoda z bliska</strong> — z przyłożoną miarką, żeby było widać wymiar</li>
+  <li>Robiąc zdjęcia, zapal światło — bez lampy błyskowej na wprost ściany</li>
+</ul>
+
+<h2><span class="n">6</span>Co wpisać do konfiguratora</h2>
+<table>
+  <thead><tr><th>Pole w konfiguratorze</th><th>Co wpisać</th></tr></thead>
+  <tbody>
+    <tr><td>Szerokość</td><td>Najmniejsza z 4 pomiarów szerokości</td></tr>
+    <tr><td>Wysokość</td><td>Najmniejsza z 4 pomiarów wysokości (przy skosie — wysokość przy wyższej ścianie)</td></tr>
+    <tr><td>Głębokość</td><td>Najmniejsza z 3 pomiarów — to głębokość całego mebla <strong>razem z frontem</strong></td></tr>
+    <tr><td>Skośny sufit</td><td>Wysokość niższej krawędzi i długość prostego sufitu</td></tr>
+    <tr><td>Uskok we wnęce</td><td>Ściana, od dołu/góry, szerokość × wysokość × głębokość przeszkody</td></tr>
+    <tr><td>Krzywe ściany</td><td>Zaznacz, gdy różnice przekraczają 5 mm (przekątne: 10 mm)</td></tr>
+  </tbody>
+</table>
+<p style="font-size:9.5pt;color:var(--mute)">Pamiętaj, że głębokość użyteczna wnętrza będzie mniejsza o grubość frontu (18–19 mm) albo o system drzwi przesuwnych (ok. 80–100 mm).</p>
+
+<h2 class="sheet-head"><span class="n">7</span>Karta pomiarów</h2>
+<p>Wydrukuj tę stronę i wypełnij przy wnęce. Wszystkie wymiary w milimetrach.</p>
+<table>
+  <thead><tr><th style="width:30%">Wymiar</th><th>Punkt pomiaru</th><th>Wynik [mm]</th></tr></thead>
+  <tbody>
+    <tr><td rowspan="4"><strong>Szerokość</strong></td><td>S1 — przód, góra</td><td class="fill"></td></tr>
+    <tr><td>S2 — przód, środek (130 cm)</td><td class="fill"></td></tr>
+    <tr><td>S3 — przód, dół</td><td class="fill"></td></tr>
+    <tr><td>S4 — tył, dół</td><td class="fill"></td></tr>
+    <tr><td rowspan="4"><strong>Wysokość</strong></td><td>W1 — przód, lewa krawędź</td><td class="fill"></td></tr>
+    <tr><td>W2 — przód, środek</td><td class="fill"></td></tr>
+    <tr><td>W3 — przód, prawa krawędź</td><td class="fill"></td></tr>
+    <tr><td>W4 — tył, środek</td><td class="fill"></td></tr>
+    <tr><td rowspan="3"><strong>Głębokość</strong></td><td>G1 — góra</td><td class="fill"></td></tr>
+    <tr><td>G2 — środek (130 cm)</td><td class="fill"></td></tr>
+    <tr><td>G3 — dół</td><td class="fill"></td></tr>
+    <tr><td rowspan="2"><strong>Przekątne</strong></td><td>P1 — lewy dół → prawa góra</td><td class="fill"></td></tr>
+    <tr><td>P2 — prawy dół → lewa góra</td><td class="fill"></td></tr>
+  </tbody>
+</table>
+
+<table>
+  <thead><tr><th style="width:30%">Do konfiguratora</th><th>Najmniejsza wartość [mm]</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Szerokość</strong> (min. S1–S4)</td><td class="fill"></td></tr>
+    <tr><td><strong>Wysokość</strong> (min. W1–W4)</td><td class="fill"></td></tr>
+    <tr><td><strong>Głębokość</strong> (min. G1–G3)</td><td class="fill"></td></tr>
+  </tbody>
+</table>
+
+<h3>Przeszkody, skosy, instalacje</h3>
+<p style="font-size:9pt;color:var(--mute);margin-bottom:.2rem">Opis, położenie i wymiary (szer. × wys. × głęb.):</p>
+<div class="lines"><div></div><div></div><div></div><div></div><div></div></div>
+
+<div class="foot"><span>ZabudujTO · zabudujto.pl · kontakt@zabudujto.pl</span><span>Instrukcja pomiaru wnęki</span></div>
+
+</doc-page>
+<script src="doc-page.js"></script>
+</body>
+</html>
