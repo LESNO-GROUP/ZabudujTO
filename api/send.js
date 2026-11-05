@@ -70,13 +70,6 @@ export default async function handler(req, res) {
       content: f.buffer.toString('base64'),
     }));
 
-    // dodaj payload JSON jako załącznik, żeby można było zarchiwizować
-    if (fields.payload) {
-      attachments.push({
-        name: `${ref}-specyfikacja.txt`,
-        content: Buffer.from(fields.payload, 'utf-8').toString('base64'),
-      });
-    }
 
     const body = {
       sender: { email: fromEmail, name: fromName },
