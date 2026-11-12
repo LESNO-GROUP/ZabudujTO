@@ -325,10 +325,14 @@ const HANDLES = [
 // ── PRICING
 const PRICING = {
   // Material handled per-decor (cena Kronospan zł/m² na pozycji)
-  hdfPerSqm:       22,        // zł / m² pleców HDF 3 mm
+  sheetPrice:     275,        // zł / arkusz płyty 18 mm 2800×2070 — stała, niezależnie od dekoru
+  hdfSheetPrice:  100,        // zł / arkusz HDF
+  packaging:      200,        // zł — kartony do zapakowania
+  marginRate:    0.10,        // 10% marży i podatków od całości
+  hdfPerSqm:       22,        // (nieużywane od v235)
   laborPerSqm:      0,        // robocizna wyłączona
-  cuttingPerMb:   2.5,        // zł / mb cięcia
-  edgingPerMb:      5,        // zł / mb obrzeża + oklejania
+  cuttingPerMb:     3,        // zł / mb cięcia
+  edgingPerMb:      6,        // zł / mb obrzeża + oklejania
   cuttingPerSqm:    5,        // ~mb cięcia na m² płyty (heurystyka)
   edgingPerSqm:     4,        // ~mb obrzeża na m² płyty (heurystyka)
   designFee:      500,        // zł / projekt (ryczałt)

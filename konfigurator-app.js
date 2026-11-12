@@ -411,10 +411,13 @@ function priceBreakdown(){
   const waste = board_m2 > 0 ? Math.max(0, (nest.sheets*sheetSqm - board_m2) / board_m2) : 0;
   const mdf_m2 = cut.mdfSqm || 0;
   const mdfCost = mdf_m2 * MDF_PRICE;
-  // płyta liczona pełnymi arkuszami z rozkroju (rozpoczęty arkusz = cały)
-  const materialCost = nest.cost
-    + hdf_m2 * (PRICING.hdfPerSqm || 22)
-    + mdfCost;
+  // płyta: stała cena za arkusz (niezależnie od dekoru), pełne arkusze z rozkroju
+  const plateCost = nest.sheets * (PRICING.sheetPrice || 275);
+  // HDF: pełne arkusze z rozkroju pleców
+  const hdfPieces = cut.pieces.filter(p=>p.kind==='hdf');
+  const hdfSheets = hdfPieces.length ? nestSheets(hdfPieces, false).sheets : 0;
+  const hdfCost = hdfSheets * (PRICING.hdfSheetPrice || 100);
+  const materialCost = plateCost + hdfCost + mdfCost;
 
   // 3. Cięcie + 4. Obrzeże — z realnej listy formatek
   const cuttingMb = cut.cutMb;
@@ -491,10 +494,15 @@ function priceBreakdown(){
     hardwareCost += (w/1000) * (PRICING.lightingPerM || 0);
   }
 
-  const subtotal = materialCost + cuttingCost + edgingCost + laborCost + designCost + backCost + accCost + hardwareCost;
-  // cena końcowa = kwota netto (subtotal / 1,23)
+  // pakowanie (kartony) — stała kwota
+  const packCost = PRICING.packaging || 0;
+  const subtotal = materialCost + cuttingCost + edgingCost + laborCost + designCost + backCost + accCost + hardwareCost + packCost;
+  // marża i podatki — % od całości
+  // sumujemy zaokrąglone pozycje, żeby wiersze kosztorysu zawsze dawały dokładnie cenę końcową
+  const subR = [materialCost, cuttingCost, edgingCost, laborCost, designCost, backCost, accCost, hardwareCost, packCost].reduce((s,v)=>s+Math.round(v),0);
+  const marginCost = Math.round(subR * (PRICING.marginRate || 0));
   const vat = 0;
-  const netto = Math.max(PRICING.minOrder || 0, Math.round(subtotal / 1.23));
+  const netto = Math.max(PRICING.minOrder || 0, subR + marginCost);
   const total = netto;
 
   return {
@@ -504,6 +512,8 @@ function priceBreakdown(){
     matC, matF, frontCount,
     // koszty (zaokrąglone)
     materialCost: Math.round(materialCost),
+    plateCost: Math.round(plateCost), hdfSheets, hdfCost: Math.round(hdfCost),
+    packCost: Math.round(packCost), marginCost: Math.round(marginCost),
     mdf_m2, mdfCost: Math.round(mdfCost),
     cuttingCost:  Math.round(cuttingCost),
     edgingCost:   Math.round(edgingCost),
@@ -3602,6 +3612,12 @@ function buildOrderSpec(refNo){
       mdf_cost: pb.mdfCost || 0,
       fronts_material: mdfOn() ? mdfLabel() : 'płyta',
       hardware: pb.hardwareCost,
+      packaging: pb.packCost,
+      margin: pb.marginCost,
+      plate_sheets: pb.nest ? pb.nest.sheets : 0,
+      plate_cost: pb.plateCost,
+      hdf_sheets: pb.hdfSheets,
+      hdf_cost: pb.hdfCost,
       total_gross: pb.total,
       total_net: pb.netto,
       vat_rate: pb.vat,
@@ -3687,6 +3703,9 @@ function buildSpecHTML(refNo){
   ${TR('Materiał', fmtZL(p.material + p.cutting + p.edging + p.labor + (p.back||0)))}
   ${p.design ? TR('Projekt', fmtZL(p.design)) : ''}
   ${TR('Akcesoria', fmtZL(p.sections_inserts + p.hardware))}
+  ${TR('Pakowanie (kartony)', fmtZL(p.packaging||0))}
+  ${TR('Marża i podatki (10%)', fmtZL(p.margin||0))}
+  ${TR('W tym materiał', 'Płyta: '+(p.plate_sheets||0)+' ark. × 275 zł = '+fmtZL(p.plate_cost||0)+' · HDF: '+(p.hdf_sheets||0)+' ark. × 100 zł = '+fmtZL(p.hdf_cost||0)+(p.mdf_cost?' · MDF: '+fmtZL(p.mdf_cost):'')+' · cięcie '+fmtZL(p.cutting)+' · obrzeże '+fmtZL(p.edging))}
   ${TR('Zużycie płyty', p.board_m2.toFixed(2).replace('.',',') + ' m²')}
   ${(p.sheets&&p.sheets.length) ? TR('Arkusze (rozkrój)', p.sheets.map(g=>g.decor+': <strong>'+g.sheets+' ark.</strong> · wykorzystanie '+g.usage_pct+'%'+(g.grain?' · słoje pilnowane':'')).join('<br>')) : ''}
   ${(p.warnings&&p.warnings.length) ? TR('Uwagi do projektu', '<span style="color:#a8552f">'+p.warnings.join('<br>')+'</span>') : ''}
@@ -4030,6 +4049,8 @@ function renderSummary(){
         <div class="ss-kv"><span class="ss-k">Materiał</span><span class="ss-v mono">${fmtPrice(pb.materialCost + pb.cuttingCost + pb.edgingCost + pb.laborCost + pb.backCost)}</span></div>
         ${pb.designCost ? `<div class="ss-kv"><span class="ss-k">Projekt</span><span class="ss-v mono">${fmtPrice(pb.designCost)}</span></div>` : ''}
         <div class="ss-kv"><span class="ss-k">Akcesoria</span><span class="ss-v mono">${fmtPrice(pb.accCost + pb.hardwareCost)}</span></div>
+        <div class="ss-kv"><span class="ss-k">Pakowanie</span><span class="ss-v mono">${fmtPrice(pb.packCost)}</span></div>
+        <div class="ss-kv"><span class="ss-k">Obsługa zamówienia</span><span class="ss-v mono">${fmtPrice(pb.marginCost)}</span></div>
       </div>
     </div>
 
