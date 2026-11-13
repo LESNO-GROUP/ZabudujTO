@@ -4044,14 +4044,6 @@ function renderSummary(){
         <div class="ss-sections">${sectionsHtml}</div>
       </div>
 
-      <div class="ss-block ss-price-block">
-        <div class="ss-block-h">Kosztorys (orientacyjnie)</div>
-        <div class="ss-kv"><span class="ss-k">Materiał</span><span class="ss-v mono">${fmtPrice(pb.materialCost + pb.cuttingCost + pb.edgingCost + pb.laborCost + pb.backCost)}</span></div>
-        ${pb.designCost ? `<div class="ss-kv"><span class="ss-k">Projekt</span><span class="ss-v mono">${fmtPrice(pb.designCost)}</span></div>` : ''}
-        <div class="ss-kv"><span class="ss-k">Akcesoria</span><span class="ss-v mono">${fmtPrice(pb.accCost + pb.hardwareCost)}</span></div>
-        <div class="ss-kv"><span class="ss-k">Pakowanie</span><span class="ss-v mono">${fmtPrice(pb.packCost)}</span></div>
-        <div class="ss-kv"><span class="ss-k">Obsługa zamówienia</span><span class="ss-v mono">${fmtPrice(pb.marginCost)}</span></div>
-      </div>
     </div>
 
     <div class="sum-total">
